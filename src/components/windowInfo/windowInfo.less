@@ -1,0 +1,136 @@
+.info{
+  width: 100%;
+  height: 500px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  .notifyModal{
+    position: absolute;
+    width: 400px;
+    height: 400px;
+    z-index: 55
+  }
+}
+.time{
+  font-size: 12px;
+  font-weight: bold;
+}
+.content{
+  padding-left: 5px;
+}
+
+.ivu-steps .ivu-steps-head-inner {
+  width: 20px;
+  height: 20px;
+  line-height: 18px;
+}
+.ivu-steps .ivu-steps-head-inner > .ivu-steps-icon.ivu-icon {
+  font-size: 18px;
+}
+.step_wrap{
+  margin-top: 20px;
+  margin-left: 16px;
+  width: 110%;
+  overflow: hidden;
+}
+.ivu-divider-horizontal.ivu-divider-with-text-center, .ivu-divider-horizontal.ivu-divider-with-text-left, .ivu-divider-horizontal.ivu-divider-with-text-right{
+  margin: 10px 0;
+}
+.history_btn{
+  margin-top: 16px;
+}
+
+.ivu-card-head {
+  p{
+    height: 45px;
+  }
+  .extra_line{
+    color: red;
+    font-weight: 500;
+    font-size: 10px;
+    margin-top: 2px;
+  }
+  .tag{
+    font-weight: 500;
+    font-size: 10px;
+    margin: 0;
+    margin-left: 10px;
+    margin-bottom: 5px;
+    padding: 0 4px;
+    height: 22px;
+    line-height: 21px;
+  }
+}
+.card_title{
+  display: flex;
+  align-items: left;
+}
+
+.divider span{
+  font-size: 12px;
+  color: #656565;
+}
+.tel{
+  float: right;
+  margin-right: 70px;
+  color: #515a6e;
+  font-size: 12px;
+}
+.step_block{
+  margin: 10px 0;
+  p{
+    line-height: 40px;
+    overflow: hidden;
+    .tel{
+      margin-left: 5px;
+    }
+  }
+  .step_btn{
+    width: ~"calc(100% - 60px)";
+    margin: 10px 0;
+  }
+  .stepitem{
+    margin: 5px 0;
+  }
+}
+.notifyModal{
+  overflow: hidden;
+  .header{
+    span{
+      margin-left: 10px;
+      color: #999;
+    }
+  }
+  .stepitem{
+    margin: 10px 0;
+  }
+  .wrap{
+    margin-left: 8%;
+    margin-right: -10%;
+  }
+  .content{
+    overflow-y: auto;
+    height: 450px;
+    overflow-x: hidden;
+  }
+}
+
+.cell-arrow{
+  transition: transform .2s ease-in-out,-webkit-transform .2s ease-in-out;
+}
+.cell-arrow.active {
+  transform: rotate(90deg);
+}
+.cell-arrow {
+  transform: rotate(0deg);
+}
+.info .cell-contact{
+  margin: 6px 0 3px 0;
+  background-color: #f7f7f7;
+  padding: 6px 16px;
+  .ivu-cell-title {
+    vertical-align: middle;
+  }
+  .ivu-cell-arrow{
+    top: 28%;
+  }
+}

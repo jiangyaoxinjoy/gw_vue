@@ -1,0 +1,34 @@
+@baseHeight: 60px;
+.main{
+  box-sizing: border-box;
+  .mainNav{
+    min-width: 1000px;
+    white-space: nowrap;
+    .wrapper-header-nav-list{
+      float: right;
+      white-space: nowrap;
+      margin-right: 16px;
+      height: @baseHeight;
+    }
+    .main_logo{
+      float: left;
+      overflow: hidden;
+      height:  @baseHeight;     
+      img{
+        height: @baseHeight;
+        width: auto;
+        padding: 8px 0;
+        vertical-align: top;
+        margin: 0 8px 0 16px;
+      }
+      h1 {
+        font-weight: 500;
+        font-size: 26px;
+      }
+    } 
+  }
+  .main-content-con{
+    height: ~"calc(100% - 60px)";
+    overflow: hidden;
+  }
+}
