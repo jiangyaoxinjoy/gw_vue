@@ -6,32 +6,55 @@
     @on-cancel="cancel"
     width="80%"
     :styles="{top: modalTop+'px'}"
+    :loading="loading"
   >
+    <Spin fix v-if="loading"></Spin>
     <template v-if="alarmType == '20'">
-      <Table height="600" :columns="columns" :data="openTableData"></Table>
+      <Table height="600" :columns="columns" :data="openTableData">      
+        <Page 
+          :current="openHistoryForm.page" 
+          class-name='totalfr' 
+          slot="footer" 
+          :page-size="openHistoryForm.limit" 
+          @on-change="openHistorychangePage" 
+          :total="openDataTotal" 
+          v-show="openDataTotal > 0"
+          show-total/>
+          </Table>
+      </Table>
     </template>
     <template v-if="alarmType == '10'">
       <Row class="modalrow">
-        <RadioGroup v-model="selectTime" @on-change="changeTime">
-          <Radio :label="5">全部</Radio>
-          <Radio :label="1">本周</Radio>
-          <Radio :label="2">上周</Radio>
-          <Radio :label="3">本月</Radio>
-          <Radio :label="4">上月</Radio>
-        </RadioGroup>
+        <DatePicker 
+          type="daterange" 
+          :options="options" 
+          placement="bottom-start" 
+          placeholder="Select date" 
+          style="width: 200px"  
+          :value="selectTime"
+          @on-change="timeChange"
+        ></DatePicker>
       </Row>
-      <Tabs :value="historyForm.showType" v-if="show">
+      <Tabs v-model="showType" v-if="show" @on-click="tabClick">
         <TabPane label="图形" name="1">
-          <chart-line style="height: 300px;" :value="lineData" :value2="value2" :value1="value1"/>
+          <chart-line style="height: 450px;" :value="lineData" :value2="value2" :value1="value1"/>
         </TabPane>
         <TabPane label="数据" name="2">
-          <Table :columns="lineColumns" :data="lineTableData" height="500">
+          <Table :columns="lineColumns" :data="lineTableData" height="500" size="small">
             <template slot="value1">
               <span>{{this.value1}}</span>
             </template>
             <template slot="value2">
               <span>{{this.value2}}</span>
             </template>
+            <Page 
+              v-show="dataTotal > 0"
+              :current="historyForm.page" 
+              class-name='totalfr' 
+              slot="footer" 
+              :page-size="historyForm.limit" 
+              @on-change="changePage" 
+              :total="dataTotal" show-total/>
           </Table>
         </TabPane>
     </Tabs>
@@ -43,7 +66,8 @@ import { ChartLine } from '_c/charts/index'
 import { getToken } from '@/libs/util'
 import { getDevicePressurehistory, getDeviceOpenhistory } from '@/api/user'
 import { getDate } from '@/libs/tools'
-import { getClientHeight} from '@/libs/tools' 
+import { getClientHeight,daterange} from '@/libs/tools' 
+
 export default {
   name: 'indexModal',
   props: {
@@ -63,6 +87,7 @@ export default {
   },
   data () {
     return {
+      loading: true,
       token: getToken(),
       columns: [
         {
@@ -80,14 +105,14 @@ export default {
           }
         },
         {
-          title: '预估出水量',
-          key: '',
+          title: '出水量约(吨)',
+          key: 'cold',
           minWidth: 120,
-          // render: (h, params) => {
-          //   // params.row.colc
-          //   // var time = params.row.colc / 1000
-          //   return h('span', time)
-          // }
+          render: (h, params) => {
+            // params.row.colc
+            // var time = params.row.colc / 1000
+            return h('span',params.row.cold.toFixed(2))
+          }
         },
         {
           title: '持续时间(秒)',
@@ -112,11 +137,16 @@ export default {
           }
         }
       ],
+      count: 0,
       openTableData: [],
-      selectTime: 4,
+      showType: '1',
       historyForm: {
-
-        showType: '1'
+        page: 1,
+        limit: 10
+      },
+      openHistoryForm: {
+        page: 1,
+        limit: 10
       },
       lineData: {},
       value1: 0,
@@ -144,7 +174,41 @@ export default {
           slot: 'value2'
         }
       ],
-      windowH: getClientHeight()
+      windowH: getClientHeight(),
+      selectTime: daterange(6),
+      options: {
+        shortcuts: [
+          {
+            text: '1周',
+            value () {
+              const end = new Date();
+              const start = new Date();
+              start.setTime(start.getTime() - 3600 * 1000 * 24 * 7);
+              return [start, end];
+            }
+          },
+          {
+            text: '1个月',
+            value () {
+              const end = new Date();
+              const start = new Date();
+              start.setTime(start.getTime() - 3600 * 1000 * 24 * 30);
+              return [start, end];
+            }
+          },
+          {
+            text: '3个月',
+            value () {
+              const end = new Date();
+              const start = new Date();
+              start.setTime(start.getTime() - 3600 * 1000 * 24 * 90);
+              return [start, end];
+            }
+          }
+        ]
+      },
+      dataTotal: 0,
+      openDataTotal: 0,
     }
   },
   computed: {
@@ -152,9 +216,7 @@ export default {
       get: function (argument) {
         return this.modalShow
       },
-      set: function () {
-
-      }
+      set: function () {}
     },
     title () {
       if (this.alarmType === 10) {
@@ -174,59 +236,84 @@ export default {
       handler (val) {
         if (val) {
           if (this.alarmType === '10') {
+            this.historyForm.page = 1
+            this.showType = '1'
             this.initPressureData()
           }
           if (this.alarmType === '20') {
+            this.openHistoryForm.page = 1
             this.initOpenData()
           }
         }
       },
       immediate: true
-    }
+    },
   },
   methods: {
-    // ...mapActions(['getDevicePressurehistory', 'getDeviceOpenhistory']),
     cancel () {
       this.$emit('hideModal', true)
     },
-    // getData () {
-    //   // this.$store.dispatch('getOpenData').then(res => {
-    //   //   this.tableData = res
-    //   // })
-    // },
     initPressureData () {
-      getDevicePressurehistory({ 'device_id': this.deviceId, 'selectTime': this.selectTime,'token': this.token }).then(res => {
-        // console.log(res.data)
-        var data = res.data.data
+      this.loading = true
+      let offset = (this.historyForm.page -1)* this.historyForm.limit
+      getDevicePressurehistory({ 'device_id': this.deviceId, 'selectTime': this.selectTime,'token': this.token,"dataType": this.showType,"limit":this.historyForm.limit, "offset": offset}).then(res => {
+        // console.log(res.data.data.list)
+        var data = res.data.data.list || []
+        console.log(data)
         this.lineData = {}
-        if (data.list != null) {
-          this.lineTableData = data.list
-          data.list.forEach((val, key) => {
-            let time = getDate(val.sendtime,'month')
-            this.lineData[time] = val.pressure_value
-          })         
-        }
-        // console.log(data)
-        this.value1 = data.value1
-        this.value2 = data.value2
+        this.lineTableData = data
+        data.forEach((val, key) => {
+          let time = getDate(val.sendtime,'month')
+          this.lineData[time] = val.pressure_value
+        })  
+        this.value1 = res.data.data.value1
+        this.value2 = res.data.data.value2
+        this.dataTotal = res.data.data.total
+        this.loading = false
+      }).catch( err => {
+        this.$message.error(err)
+        this.loading = false
       })
     },
     initOpenData () {
-      getDeviceOpenhistory({ 'device_id': this.deviceId, 'token': this.token }).then(res => {
-        // console.log(res.data.data)
-        var data = res.data.data
-        if (data != null) {
-          this.openTableData = data
+      this.loading = true
+      let query = {}
+      query.limit = this.openHistoryForm.limit
+      query.offset = (this.openHistoryForm.page -1)* this.openHistoryForm.limit
+      query.device_id = this.deviceId
+      query.token = this.token
+      getDeviceOpenhistory(query).then(res => {
+        // console.log(res)
+        if(res.data.status == 0) {
+          this.openTableData = res.data.data.list || []
+          this.openDataTotal = res.data.data.total
+        } else {
+          this.$message.error(res.data.msg)
         }
+        this.loading = false
+      }).catch( err => {
+        this.$message.error(err)
+        this.loading = false
       })
     },
-    changeTime () {
+    timeChange (val) {
+      this.historyForm.page = 1
+      this.selectTime = val
+      this.initPressureData()
+    },
+    changePage(page) {
+      this.historyForm.page = page
+      this.initPressureData()
+    },
+    openHistorychangePage(page) {
+      this.openHistoryForm.page = page
+      this.initOpenData()
+    },
+    tabClick(name){
+      this.showType = name
+      this.historyForm.page = 1
       this.initPressureData()
     }
-  },
-  mounted () {
-    // this.getData()
-    // this.initPressureData()
   }
 }
 </script>

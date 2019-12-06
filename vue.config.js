@@ -1,48 +1,27 @@
 const path = require('path')
-
+var webpack = require('webpack');
 const resolve = dir => {
   return path.join(__dirname, dir)
 }
-
-// 项目部署基础
-// 默认情况下，我们假设你的应用将被部署在域的根目录下,
-// 例如：https://www.my-app.com/
-// 默认：'/'
-// 如果您的应用程序部署在子路径中，则需要在这指定子路径
-// 例如：https://www.foobar.com/my-app/
-// 需要将它改为'/my-app/'
-// iview-admin线上演示打包路径： https://file.iviewui.com/admin-dist/
-const BASE_URL = process.env.NODE_ENV === 'production'
-  ? '/'
-  : '/'
-
+const BASE_URL = process.env.NODE_ENV === 'production' ?
+  '/' :
+  '/'
+const UglifyJSPlugin = require('uglifyjs-webpack-plugin');
 const CompressionWebpackPlugin = require('compression-webpack-plugin');
 const productionGzipExtensions = ['js', 'css'];
-// const UglifyJsPlugin = require('uglifyjs-webpack-plugin');
+// const uglifyjs = require('uglifyjs-webpack-plugin');
 const isProduction = process.env.NODE_ENV === 'production';
-
+const merge = require("webpack-merge");
 module.exports = {
+  runtimeCompiler: true, //是否使用包含运行时编译器的 Vue 构建版本
   configureWebpack: config => {
-    // config.externals = {
-    //     'vue': 'Vue',
-    //     // 'vue-router': 'VueRouter',
-    //     // 'moment': 'moment'
-    // }
+    config.externals = {
+      'vue': 'Vue',
+      'vue-router': 'VueRouter',
+      'axios': 'axios',
+      'vuex': 'Vuex'
+    }
     if (isProduction) {
-      //修改uglifyOptions去除console来减少文件大小
-      // config.plugins.push(
-      //   new UglifyJsPlugin({
-      //     uglifyOptions: {
-      //       compress: {
-      //         warnings: false,
-      //         drop_debugger: true,
-      //         drop_console: true,
-      //       },
-      //     },
-      //     sourceMap: false,
-      //     parallel: true,
-      //   })       
-      // )
       //开启gzip压缩
       config.plugins.push(new CompressionWebpackPlugin({
         algorithm: 'gzip',
@@ -52,31 +31,84 @@ module.exports = {
       }))
     }
   },
-  // pages: {
-  //   index: {
-  //     entry: '@/main.js',
-  //     template: 'public/index.html',
-  //     filename: 'index.html'
-  //   },
-    
-  // }
-  // Project deployment base
-  // By default we assume your app will be deployed at the root of a domain,
-  // e.g. https://www.my-app.com/
-  // If your app is deployed at a sub-path, you will need to specify that
-  // sub-path here. For example, if your app is deployed at
-  // https://www.foobar.com/my-app/
-  // then change this to '/my-app/'
-  // baseUrl: BASE_URL,
   publicPath: BASE_URL,
   // tweak internal webpack configuration.
   // see https://github.com/vuejs/vue-cli/blob/dev/docs/webpack.md
   // 如果你不需要使用eslint，把lintOnSave设为false即可
   lintOnSave: false,
   chainWebpack: config => {
-    config.resolve.alias
+    config.entry.app = ["babel-polyfill", resolve('src/main.js')], //让ie打开页面
+      config.resolve.alias
       .set('@', resolve('src')) // key,value自行定义，比如.set('@@', resolve('src/components'))
       .set('_c', resolve('src/components'))
+    // //为了补删除换行而加的配置
+    config.module
+      .rule("vue")
+      .use("vue-loader")
+      .loader("vue-loader")
+      .tap(options => {
+        // modify the options...
+        options.compilerOptions.preserveWhitespace = true;
+        return options;
+      })
+      .end();
+
+    // config.module
+    //   .rule('js')
+    //   // .test(/\.js$/)
+    //   .pre()
+    //   .include
+    //   .add(resolve('node_modules/vue-baidu-map/components/'))
+    //   .end()
+    //   .use('babel')
+    //   .loader('babel-loader')
+    //   // .tap(options => {
+    //   //     // modify the options...
+    //   //     options.presets = [
+    //   //       ['@babel/preset-env', {
+    //   //         modules: false
+    //   //       }]
+    //   //       return options;
+    //   //     })
+    //   .options({
+    //     presets: [
+    //       ['@babel/preset-env', {
+    //         modules: false
+    //       }]
+    //     ]
+    //   });
+    // .test(/\.js$/)
+    // .use('babel-loader')
+    // .loader('babel-loader')
+    // .include
+    // .add(resolve('node_modules/vue-baidu-map/components/')) // 要处理的模块
+    // .end()
+    //   // config.module
+    //   //   .rule('js')
+    //   //   // .test(/\.js$/)
+    //   //   // .use('babel-loader')
+    //   //   // .loader('babel-loader')
+    //   //   .include
+    //   //   .add('node_modules/vue-baidu-map/components/')
+    //   // .tap(options => {
+    //   //   merge(options, {
+    //   //     presets: ['es2015'],
+    //   //   })
+    //   // })
+    //   .end()
+    // .use("iview-loader")
+    // .loader("iview-loader")
+    // .tap(options =>
+    //   merge(options, {
+    //     prefix: true,
+    //    })
+    //   )
+    // // .tap(options => {
+    // //   // modify the options...
+    // //   options['prefix'] = false;
+    // //   return options;
+    // // })
+    // .end();
   },
   // 设为false打包时不生成.map文件
   productionSourceMap: false,
@@ -84,8 +116,10 @@ module.exports = {
   devServer: {
     proxy: {
       '/api': {
-        target: 'http://192.168.1.41:8087/', // 后台服务器的ip地址
-        pathRewrite: { '^/api': '/' },
+        target: 'https://console.guanweixiaofang.com', // 后台服务器的ip地址
+        pathRewrite: {
+          '^/api': '/'
+        },
         changeOrigin: true,
         ws: false
       }
@@ -105,7 +139,7 @@ module.exports = {
 
 }
 
- 
+
 // function addStyleResource(rule) {
 //     rule.use('style-resource')
 //         .loader('style-resources-loader')

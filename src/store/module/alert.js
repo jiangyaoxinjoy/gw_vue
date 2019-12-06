@@ -8,38 +8,38 @@ import config from '@/config/index.js'
 
 export default {
   state: {
-    curMarker: "",
+    // curMarker: "",
     alarmTypeList: [
-      { 'key': '10', title: '水压异常' },
-      { 'key': '20', title: '阀门打开' },
-      { 'key': '30', title: '撞到' }
-      // { 'key': '70', title: '设备异常' }
+      { 'key': 1, title: '水压异常' },
+      { 'key': 2, title: '阀门开启' },
+      { 'key': 3, title: '撞倒' }
+      // { 'key': 4, title: '离线' }
     ],
-    alarmInfo: {},
-    curDeviceId: '',
-    defaultCity: ''
+    // alarmInfo: {},
+    // curDeviceId: '',
+    // defaultCity: ''
   },
-  getters: {
-    getDefalultCity: state => {
-      return state.defaultCity || config.defaultCity
-    }
-  },
+  // getters: {
+  //   getDefalultCity: state => {
+  //     return state.defaultCity || config.defaultCity
+  //   }
+  // },
   mutations: {
-    setCurMarker (state, payload) {
-      console.log(payload)
-      if (!payload.lng) return
-      state.curMarker = {lng: payload.lng, lat: payload.lat}
-      state.curDeviceId = payload.device_id
-    },
-    setCurDeviceId (state, payload) {
-      state.curDeviceId = payload
-    },
-    setAlarmInfo (state, payload) {
-      state.alarmInfo = payload
-    },
-    setDefaultCity (state, payload) {
-      state.defaultCity = payload
-    }
+    // setCurMarker (state, payload) {
+    //   console.log(payload)
+    //   if (!payload.lng) return
+    //   state.curMarker = {lng: payload.lng, lat: payload.lat}
+    //   state.curDeviceId = payload.device_id
+    // },
+    // setCurDeviceId (state, payload) {
+    //   state.curDeviceId = payload
+    // },
+    // setAlarmInfo (state, payload) {
+    //   state.alarmInfo = payload
+    // },
+    // setDefaultCity (state, payload) {
+    //   state.defaultCity = payload
+    // }
   },
   actions: {
     // 通过设备id获取设备报警具体信息

@@ -28,37 +28,19 @@
         <Button class="tbHBtn" type="info" @click="handleBatchValue">
           <span>批量设置阀值</span>
         </Button>
-        <Button class="tbHBtn" type="info" @click="handleBatchValue">
+        <Button class="tbHBtn" type="info" @click="handleBatchWater">
           <span>批量导出设备用水量</span>
         </Button>
       </div>
     </div>
-    <!-- <div class="tb_pop_device" slot-scope="{ row, index }" slot="deviceId">
-      <Poptip
-        confirm
-        @on-ok="copyDeviceId($event, row.device_id)"
-        ok-text="复制"
-      >
-        <div slot="title">{{row.device_id}}</div>
-        <div>{{row.device_id}}</div>
-      </Poptip>
-      <Poptip
-      >
-        <div slot="title">{{row.device_id}}</div>
-        <div slot="content">
-          <Button v-clipboard="{value:row.device_id,success: copySuccess, error: copyError}">copy</Button> 
-        </div>
-        <div>{{row.device_id}}</div>
-      </Poptip>
-    </div> -->
     <template slot-scope="{ row, index }" slot="state">
+      
       <Tooltip placement="top">
         <div slot="content">{{row.state | alarmTypeFilter}}</div>
         <Tag class="stateTag" v-if="row.state == '70' && row.status != 0" type="dot" color="error">离线</Tag>
-        <Tag class="stateTag" v-if="row.state == '80' && row.status != 0" type="dot" color="error">故障</Tag>
         <Tag class="stateTag" v-if="row.state != '70' && row.state != '80' && row.status != 0" type="dot" color="success">在线</Tag>
-        <Tag color="default" v-if="row.status == 0">未安装</Tag>
       </Tooltip>
+      <Tag color="default" v-if="row.status == 0">未安装</Tag>
     </template>
     <template slot="signal" slot-scope="{ row, index }">
       <Tooltip placement="top">
@@ -103,12 +85,18 @@
           <Icons type="yongshuiliang" color="#9fa19f" :size="18" />
         </Tooltip>
       </div>
+      <div @click="handleDevicePressure(row)" class="action_block">
+        <Tooltip content="设备水压" placement="top">
+          <Icons type="shuiyashangxian" color="#9fa19f" :size="18" />
+        </Tooltip>
+      </div>
     </template>
     <template slot="address" slot-scope="{ row, index }">
       <Tooltip content="查看地图" placement="top">
         <div class="tbAddress"  type="text" v-if="row.status === 1" @click="goMap(row)">
           <Icons type="ditu" :size="16"/>
-          {{row.address}}       
+          {{row.address}}    
+          <span v-if="row.descrip" class="rowDescrip">({{row.descrip}})</span>  
         </div>
       </Tooltip>
     </template>
@@ -122,6 +110,40 @@
   <ImportDevice :uploadModal="uploadModal" :companyList="companyList" @uploadChangeState="closeImportModal"/>
   <ValueModal @closeModal="closeVlaueModal" :valueModal="valueModal" @getValue="getValue"/>
   <waterContent :actionUrl="url" :waterModal="waterModal" :deviceId="queryDeviceId" @waterChangeState="closeWaterModal"/>
+  <Modal
+    v-model="exportWaterModal"
+    title="批量导出设备用水量"
+    width="350">
+    <!-- <Row></Row> -->
+    <Row :gutter="16">
+      <Col span="9" class-name="water-lable">选择导出的时间段</Col>
+      <Col span="15">
+        <DatePicker 
+          type="daterange" 
+          :options="options" 
+          placement="bottom-start" 
+          placeholder="Select date" 
+          style="width: 100%"  
+          :value="selectTime"
+          @on-change="changeSelectTime"
+        ></DatePicker>
+      </Col>
+    </Row>
+    
+    <div slot="footer" class="waterfooter">
+      <Button size="small" @click="closeExportWaterBatch">取消</Button>
+      <form :action="url +'batchdeviceWaterExport'" method="post" style="display: inline-block">
+        <input type="text" hidden name="token" :value="token"/>
+        <input type="text" hidden name="deviceIdString" :value="deviceIdstring"/>
+        <input type="text" hidden name="startTime" :value="selectTime[0]"/>
+        <input type="text" hidden name="endTime" :value="selectTime[1]"/>
+        <Button size="small" type="primary" html-type="submit" :disabled="canBatchWater">导出</Button>
+      </form>
+      
+    </div>
+    <!-- <p>After you click ok, the dialog box will close in 2 seconds.</p> -->
+  </Modal>
+  <IndexHistoryModal v-if="history" :modalShow="historyModal" :deviceId="queryDeviceId" @hideModal="historyModal = false" alarmType="10"/>
 </div>
 </template>
 <script>
@@ -130,13 +152,14 @@ import { mapActions, mapState, mapGetters, mapMutations } from 'vuex'
 import Icons from '_c/icons'
 // import { isString } from '@/libs/util.js'
 import { getClientWidth } from '@/libs/tools.js'
-import { getDate } from '@/libs/tools'
+import { daterange, getDate }  from '@/libs/tools'
 import AddDevice from './addDeviceModal.vue'
 import EditDevice from './editDeviceModal.vue'
 import ImportDevice from './importDeviceModal.vue'
 import ValueModal from './setValueModal.vue'
 // import waterContent from './waterModal.vue'
 const waterContent = () => import(/* webpackChunkName: "water-modal" */'./waterModal.vue')
+import { IndexHistoryModal} from "_c/modal/index.js"
 
 export default {
   components: {
@@ -146,10 +169,17 @@ export default {
     EditDevice,
     ImportDevice,
     ValueModal,
-    waterContent
+    waterContent,
+    IndexHistoryModal
   },
   data () {
     return {
+      history: true,
+      historyModal: false,
+      ifChangePage: false,
+      canBatchWater: false,
+      deviceIdstring: '',
+      exportWaterModal: false,
       loading: true,
       ifeventModal: false,
       eventModalShow: false,
@@ -176,7 +206,7 @@ export default {
         {
           title: '设备号',
           key: 'device_id',
-          minWidth: 160,
+          minWidth: 170,
           className: 'tbDeviceId'
         },
         {
@@ -194,6 +224,7 @@ export default {
         },{
           title: '地址',
           slot: 'address',
+          className: 'address_cell',
           minWidth: 200
         },
         {
@@ -212,7 +243,7 @@ export default {
         {
           title: '操作',
           slot: 'action',
-          minWidth: 140
+          minWidth: 205
         }
       ],
       deviceData: [],
@@ -234,7 +265,39 @@ export default {
         company_id: '',
         threshold: ''
       },
-      tableWidth: getClientWidth() - 220
+      tableWidth: getClientWidth() - 220,
+      selectTime: daterange(6),
+      options: {
+        shortcuts: [
+          {
+            text: '1周',
+            value () {
+              const end = new Date();
+              const start = new Date();
+              start.setTime(start.getTime() - 3600 * 1000 * 24 * 7);
+              return [start, end];
+            }
+          },
+          {
+            text: '1个月',
+            value () {
+              const end = new Date();
+              const start = new Date();
+              start.setTime(start.getTime() - 3600 * 1000 * 24 * 30);
+              return [start, end];
+            }
+          },
+          {
+            text: '3个月',
+            value () {
+              const end = new Date();
+              const start = new Date();
+              start.setTime(start.getTime() - 3600 * 1000 * 24 * 90);
+              return [start, end];
+            }
+          }
+        ]
+      }
     }
   },
   derectives: {
@@ -254,6 +317,9 @@ export default {
       tableHeight: state => state.user.windowH - 60,
       comId: state => state.user.comId,
       companyList: state => state.user.companyList,
+      token: state => state.user.token,
+      selectedDeviceReset: state => state.device.selectedDeviceReset,
+      refreshDevice: state => state.device.refreshDevice
     }),
     ...mapGetters([
       'deviceParams'
@@ -263,9 +329,28 @@ export default {
     deviceParams: {
       handler () {
         this.loading = true
+        // this.selected = []
         this.setDeviceList()
       },
       deep: true
+    },
+    selectedDeviceReset(val) {
+      if (val) {
+        if (this.selected.length > 0) {
+          this.selected = []
+          this.loading = true
+          this.setDeviceList()
+        }
+        this.SetSelectedDeviceReset(false)
+      }
+    },
+    refreshDevice(val) {
+      if(val) {
+        this.selected = []
+        this.loading = true
+        this.setDeviceList()
+        this.setRreshDevice(false)
+      }
     }
   },
   beforeCreate () {
@@ -280,7 +365,7 @@ export default {
   },
   methods: {
     ...mapActions(['deviceList', 'volumesetValue', 'deleteDevice']),
-    ...mapMutations(['setCenterMarker', 'setDeviceParams']),
+    ...mapMutations(['setCenterMarker', 'setDeviceParams', 'setDeviceIds','SetSelectedDeviceReset','setRreshDevice']),
     //事件查询按钮
     eventQuery (row) {
       this.ifeventModal = true
@@ -288,11 +373,17 @@ export default {
       this.queryDeviceId = row.device_id
     },
     changePage (val) {
+      this.ifChangePage = true
       this.deviceParams.pageNum = val
       this.setDeviceParams(this.deviceParams)
     },
     setDeviceList () {
       if ( !_.isString(this.deviceParams.addkeys)) return
+      if (!this.ifChangePage) {
+        this.selected = []
+        this.setDeviceIds("")
+      }
+      this.ifChangePage = false
       this.deviceList(this.deviceParams).then(res => {
         this.deviceData = res.data.list === null ? [] : res.data.list
         this.dataTotal = res.data.count
@@ -300,14 +391,9 @@ export default {
           let centerMark = res.data.list[0]
           this.setCenterMarker({ lng: centerMark.lng, lat: centerMark.lat })
         }
-        this.loading = false
+        this.updateChecked()
       }).catch( err => {
-        if (err.search("auth") != -1) {
-          this.$Modal.error({
-              title: "提示",
-              content: "没有查看权限"
-          });
-        }
+        this.$Message.error(err)
         this.loading = false
       })
     },
@@ -322,13 +408,9 @@ export default {
     eventModalState (val) {
       this.eventModalShow = val
     },
-    changePage (pageNum) {
-      this.deviceParams.pageNum = pageNum
-      this.setDeviceList()
-    },
     //修改按钮
     handleRowEdit (row) {
-      // console.log(row)
+      console.log(row)
       this.mapItem.address = row.address
       this.mapItem.id = row.Id 
       this.mapItem.lat = row.lat
@@ -336,6 +418,7 @@ export default {
       this.mapItem.device_id = row.device_id
       this.mapItem.company_id = row.company_id
       this.mapItem.threshold = row.threshold
+      this.mapItem.descrip= row.descrip
       this.editModal = true
       if (row.status === 1) {
         this.deviceSetUp = true
@@ -361,6 +444,7 @@ export default {
         this.deviceParams.order = 'asc'
       }
       this.deviceParams.pageNum = 1
+      this.loading = true
       this.setDeviceList()
     },
     //选择公司
@@ -395,21 +479,29 @@ export default {
       _.remove(this.selected, n => {
         return n.device_id === row.device_id
       });
+      var str = _.join(_.map(this.selected, 'device_id'),',')
+      this.setDeviceIds(str)
     },
     handleSelect(selection, row) {
       //添加到已选项
       this.selected.push(row);
+      var str = _.join(_.map(this.selected, 'device_id'),',')
+      this.setDeviceIds(str)
     },
     handleSelectAll(selection) {
       //数组合并，有可能用户先选择了某几项，已经被我们push进去，因此数组合并需要去重一下
       this.selected = _.uniqBy(this.selected.concat(selection), "device_id");
+      var str = _.join(_.map(this.selected, 'device_id'),',')
+      this.setDeviceIds(str)
     },
     handleCancelSelectAll(selection) {
       //从已选项中移除当页数据
       this.selected = _.differenceBy(this.selected, this.deviceData, "device_id");
+      var str = _.join(_.map(this.selected, 'device_id'),',')
+      this.setDeviceIds(str)
     },
     //把源数据加上_checked字段，遍历已选项数据，更新选中状态
-    updateChecked() {
+    updateChecked () {
       for (var i = 0; i < this.deviceData.length; i++) {
         this.deviceData[i]._checked = false;
         for (var j = 0; j < this.selected.length; j++) {
@@ -418,6 +510,9 @@ export default {
           }
         }
       }
+      setTimeout( () => {
+        this.loading = false
+      },100)
     },
     handleBatchDelete () {
       // console.log(this.selected)
@@ -430,6 +525,7 @@ export default {
             var data = {}
             data.deviceIds = []
             data.deviceIds = _.map(this.selected, 'device_id')
+            this.selected = []
             this.doDeleteDevice(data)
           },
           onCancel: () => {
@@ -452,6 +548,7 @@ export default {
             data.deviceIds = []
             data.deviceIds.push(row.device_id)
             this.doDeleteDevice(data)
+            this.handleCancel("",row)
           },
           onCancel: () => {
             this.$Message.info('取消');
@@ -525,6 +622,37 @@ export default {
     },
     closeWaterModal (val) {
       this.waterModal = val
+    },
+    //批量导出设备用水量
+    handleBatchWater () {
+      if (this.selected.length ===  0) {
+        this.$Message.warning({
+          content: "请选择要导出的设备",
+          duration: 2
+        });
+       } else {
+          this.exportWaterModal = true
+          var deviceIds = _.map(this.selected, "device_id")
+          this.deviceIdstring = _.join(deviceIds, ',');
+       }    
+    },
+    closeExportWaterBatch () {
+      this.exportWaterModal = false
+    },
+    //批量导出出水量时间选择
+    changeSelectTime (val) {
+      this.selectTime = val
+      console.log(val)
+      if (val[0] === '' || val[1] === '') {
+        this.canBatchWater = true
+      } else {
+        this.canBatchWater = false
+      }
+    },
+    handleDevicePressure(row) {
+      this.historyModal = true
+      this.queryDeviceId = row.device_id
+      this.history = true
     }
   }
 }
@@ -553,7 +681,7 @@ export default {
 .tb_pop_address div {
   width: 100%;
 }
-.tb_pop .ivu-tag-dot {
+.manage_device .ivu-tag-dot {
   border-width: 0px !important;
 }
 </style>

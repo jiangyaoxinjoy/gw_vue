@@ -18,7 +18,8 @@ export default {
    * @description api请求基础路径
    */
   baseUrl: {
-    dev: 'http://192.168.1.60:8087/',
+    // dev: 'http://localhost:8087',
+    dev: 'https://console.guanweixiaofang.com',
     // dev: 'https://www.easy-mock.com/mock/5add9213ce4d0e69998a6f51/iview-admin/',
     // pro: 'https://produce.com'
     pro: '/'
@@ -42,5 +43,11 @@ export default {
     lat: 39.915
   },
   defaultCity: "北京",
-  showMapStyleId: '14b72cd191e675ac6257db90d1bf6895'
+  showMapStyleId: '14b72cd191e675ac6257db90d1bf6895',
+  wsURL: {
+    dev: 'wss://console.guanweixiaofang.com:9000/ws',
+    pro: 'wss://console.guanweixiaofang.com:9000/ws'
+  },
+  mapAk: 'QPPRPzUYlpEqGNkyylz2OuTBQCeWVHAd'
+  // wsURL: 'wss://console.guanweixiaofang.com:9000/ws'
 }

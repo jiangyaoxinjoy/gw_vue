@@ -3,43 +3,42 @@
     v-model="showModal"
     title="添加人员"
     :mask-closable="false"
-    :footer-hide="true"
     @on-visible-change="changeState"
   >
-      <Form :model="modalForm" :label-width="80" ref="modalForm" :rules="ruleValidate" @keydown.enter.native="handleSubmit">
-        <FormItem label="昵称" prop="name">
-            <Input v-model="modalForm.name" placeholder="输入昵称"></Input>
-        </FormItem>
-        <FormItem label="真实姓名" prop="real_name">
-            <Input v-model="modalForm.real_name" placeholder="输入真实姓名"></Input>
-        </FormItem>
-        <FormItem label="密码" prop="password">
-            <Input v-model="modalForm.password" placeholder="输入密码"></Input>
-        </FormItem>
-        <FormItem label="电话号码" prop="phone">
-            <Input v-model="modalForm.phone" placeholder="输入电话号码"></Input>
-        </FormItem>
-        <FormItem label="公司名称" prop="company_id">
-            <Select v-model="modalForm.company_id">
-                <Option v-for="item in companyList" :key="item.Id" :value="item.Id">{{item.name}}</Option>
-            </Select>
-        </FormItem>
-        <FormItem label="权限" prop="authority">
-            <CheckboxGroup v-model="modalForm.authority">
-              <Checkbox v-for="item in authList" :key="item.Id" :label="item.Id">{{item.name}}</Checkbox>
-            </CheckboxGroup>
-        </FormItem>
-        <FormItem label="是否禁用">
-          <RadioGroup v-model="modalForm.status">
-            <Radio  :label="-1" >禁用</Radio>
-            <Radio :label="1">使用</Radio>
-          </RadioGroup>
-        </FormItem>
-        <FormItem>
-          <Button type="primary" @click="handleSubmit('modalForm')">提交</Button>
-          <Button style="margin-left: 8px" @click="handlerClose">取消</Button>
-        </FormItem>
-      </Form>
+    <Form :model="modalForm" :label-width="80" ref="modalForm" :rules="ruleValidate" @keydown.enter.native="handleSubmit">
+      <FormItem label="昵称" prop="name">
+          <Input v-model="modalForm.name" placeholder="输入昵称"></Input>
+      </FormItem>
+      <FormItem label="真实姓名" prop="real_name">
+          <Input v-model="modalForm.real_name" placeholder="输入真实姓名"></Input>
+      </FormItem>
+      <FormItem label="密码" prop="password">
+          <Input v-model="modalForm.password" placeholder="输入密码" type="password"></Input>
+      </FormItem>
+      <FormItem label="电话号码" prop="phone">
+          <Input v-model="modalForm.phone" placeholder="输入电话号码" type="tel"></Input>
+      </FormItem>
+      <FormItem label="公司名称" prop="company_id">
+          <Select v-model="modalForm.company_id">
+              <Option v-for="item in companyList" :key="item.Id" :value="item.Id">{{item.name}}</Option>
+          </Select>
+      </FormItem>
+      <FormItem label="权限" prop="authority">
+          <CheckboxGroup v-model="modalForm.authority">
+            <Checkbox v-for="item in authList" :key="item.Id" :label="item.Id">{{item.name}}</Checkbox>
+          </CheckboxGroup>
+      </FormItem>
+      <FormItem label="是否禁用">
+        <RadioGroup v-model="modalForm.status">
+          <Radio  :label="-1" >禁用</Radio>
+          <Radio :label="1">使用</Radio>
+        </RadioGroup>
+      </FormItem>        
+    </Form>
+    <div slot="footer">     
+      <Button @click="handlerClose">取消</Button>
+      <Button type="primary" @click="handleSubmit('modalForm')">提交</Button>
+    </div>
   </Modal>
 </template>
 <script>

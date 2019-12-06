@@ -18,7 +18,7 @@
         </FormItem>
         <FormItem label="地址/设备号">
           <Input
-            @on-change="handleClear"
+            @on-change="addkeysChange"
             clearable
             placeholder="输入设备地址、设备号"
             class="search-input"
@@ -26,7 +26,7 @@
           />
         </FormItem>
         <FormItem label="日期范围" class="data_search">
-          <DatePicker type="daterange" @on-clear="claerDate" split-panels placeholder="选择日期" v-model='alarmParams.dataPicker'></DatePicker>
+          <DatePicker type="daterange" split-panels placeholder="选择日期" v-model='alarmParams.dataPicker' @on-change="timeChange"></DatePicker>
         </FormItem>
         <FormItem class="form_search">
           <Button @click="handleSearch" size="large" class="search-btn" type="warning"><Icon type="search"/>查询</Button>
@@ -54,6 +54,12 @@
         :height="tableHeight"
         ref="table"
       >
+        <template slot="address" slot-scope="{ row, index }">
+          <div class="rowAddress">
+            {{row.address}}
+            <span v-if="row.descrip" class="rowDescrip">({{row.descrip}})</span>
+          </div>
+        </template>
         <template slot-scope="{ row, index }" slot="action">
           <Button type="info" size="small" @click="show(row)">告警详情</Button>
         </template>
@@ -114,21 +120,32 @@ export default {
             switch (params.row.alert_type) {
               case '60':
                 texts = '水压异常'
-                break
-              case '20':
-                texts = '阀门打开'
-                break
-              case '30':
+                break;
+              case '120':
+                texts = '阀门开启'
+                break;
+              case '130':
                 texts = '撞倒'
-                break
+                break;
               case '70':
-                texts = '失联'
-                break
+                texts = '离线'
+                break;
+              case '80':
+                texts = '水压恢复'
+                break;
+              case '90':
+                texts = '阀门已关闭'
+                break;
+              case '100':
+                texts = '撞倒恢复'
+                break;
+              case '110':
+                texts = '离线恢复'
+                break;
               default:
-                texts = '设备异常'
-                break
+                break;
             }
-            if (params.row.restoretime === 0 && params.row.alert_type !== '70') {
+            if (params.row.restoretime === 0 && (params.row.alert_type === '60' || params.row.alert_type === '120' || params.row.alert_type === '130')) {
               return h('span', {
                 style: {
                   backgroundColor: '#E97C67',
@@ -167,14 +184,14 @@ export default {
         },
         {
           title: '通知情况',
-          minWidth: 100,
+          minWidth: 110,
           key: 'notifyStatus',
           render: (h, params) => {
             let texts = ''
-            if (params.row.notifyStatus === 1) {
-              texts = '通知已到达'
+            if (params.row.isnotify === 1) {
+              texts = '已有通知到达'
             } else {
-              texts = '通知未到达'
+              texts = '有通知未到达'
             }
             return h('div', { props: {} }, texts)
           }
@@ -186,8 +203,8 @@ export default {
         },
         {
           title: '地址',
+          slot: 'address',
           minWidth: 250,
-          key: 'address'
         },
         {
           title: '操作',
@@ -220,7 +237,11 @@ export default {
       if (this.companyList.length === 0) {
         this.getCompanyList()
       }
-      this.alarmParams.companyId = this.comId
+      if (this.comId === 1) {
+        this.alarmParams.companyId = 0
+      } else {
+        this.alarmParams.companyId = this.comId
+      }      
       this.$nextTick( () =>{
         this.getAlertData()
       })
@@ -231,12 +252,9 @@ export default {
         this.getAlertData()
       })
     },
-    //地址清空
-    handleClear (e) {
-      // console.log(e.target.value)
-      if (e.target.value === '') {
-        this.queryData()
-      }
+    //地址设备关键字改变
+    addkeysChange (e) {
+      this.queryData()
     },
     //查询按钮
     handleSearch () {
@@ -249,23 +267,28 @@ export default {
     comChange (val) {
       this.alarmParams.companyId = val
       this.queryData()
-    },
-    
+    },    
     alarmStateChange () {
       this.queryData()
     },
     handleReset () {
       this.alarmParams.addkeys = ''
       this.alarmParams.alertState = 0
-      this.alarmParams.companyId = this.comId
+      if (this.comId === 1) {
+        this.alarmParams.companyId = 0
+      } else {
+        this.alarmParams.companyId = this.comId
+      }   
       this.alarmParams.dataPicker = ['', '']
       this.alarmParams.pageNum = 1
       this.$nextTick( () =>{
         this.getAlertData()
       })
     },
-    //日期清空
-    claerDate(e) {
+    //日期范围改变
+    timeChange (val) {
+      // console.log(val)
+      this.alarmParams.dataPicker = val
       this.queryData()
     },
     /**
@@ -276,12 +299,6 @@ export default {
       this.loading = true
       var payload = JSON.parse(JSON.stringify(this.alarmParams))
       payload.offset = (Number(payload.pageNum) - 1) * Number(payload.limit)
-      if (payload.dataPicker[0] !== '' && payload.dataPicker[1] !== '') {
-        var date = new Date(payload.dataPicker[0])
-        payload.dataPicker[0] = String(date.getTime())
-        var date1 = new Date(payload.dataPicker[1])
-        payload.dataPicker[1] = String(date1.getTime())
-      }
       this.getAlertHistory(payload).then(res => {
         if (res.list != null) {
           this.tableData = res.list

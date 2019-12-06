@@ -3,8 +3,11 @@ import axios from '@/libs/api.request'
 export const login = (payload) => {
   return axios.request({
     url: '/dologin',
-    data: JSON.stringify(payload),
+    data: payload,
     method: 'post',
+    transformRequest: (data) => {
+      return JSON.stringify(data)
+    },
     headers: {
       'Content-Type': 'application/json'
     }
@@ -15,7 +18,9 @@ export const getUserInfo = (token) => {
   return axios.request({
     url: '/userInfo',
     method: 'post',
-    data: { token: token },
+    data: {
+      token: token
+    },
     transformRequest: (data) => {
       return JSON.stringify(data)
     },
@@ -107,31 +112,20 @@ export const userDelete = (data) => {
   })
 }
 
+//以为要上传文件所有用formData
 export const addCom = (data) => {
   return axios.request({
     url: '/comadd',
     method: 'post',
-    data: data,
-    // transformRequest: (data) => {
-    //   return JSON.stringify(data)
-    // },
-    // headers: {
-    //   'Content-Type': 'application/json'
-    // }
+    data: data
   })
 }
-
+//以为要上传文件所有用formData
 export const editCom = (data) => {
   return axios.request({
     url: '/comedit',
     method: 'post',
-    data: data,
-    // transformRequest: (data) => {
-    //   return JSON.stringify(data)
-    // },
-    // headers: {
-    //   'Content-Type': 'application/json'
-    // }
+    data: data
   })
 }
 
@@ -467,116 +461,159 @@ export const getDeviceWater = (data) => {
   })
 }
 
-export const logout = (token) => {
+export const statisticalChart = (data) => {
   return axios.request({
-    url: '/logout',
-    method: 'post'
-  })
-}
-
-export const getUnreadCount = () => {
-  return axios.request({
-    url: 'message/count',
-    method: 'get'
-  })
-}
-
-export const getMessage = () => {
-  return axios.request({
-    url: 'message/init',
-    method: 'get'
-  })
-}
-
-export const getContentByMsgId = msg_id => {
-  return axios.request({
-    url: 'message/content',
-    method: 'get',
-    params: {
-      msg_id
-    }
-  })
-}
-
-export const hasRead = msg_id => {
-  return axios.request({
-    url: 'message/has_read',
+    url: "statisticalChart",
     method: 'post',
-    data: {
-      msg_id
+    data: data,
+    transformRequest: (data) => {
+      return JSON.stringify(data)
+    },
+    headers: {
+      'Content-Type': 'application/json'
     }
   })
 }
 
-export const removeReaded = msg_id => {
+export const devicebackup = (data) => {
   return axios.request({
-    url: 'message/remove_readed',
+    url: "devicebackup",
     method: 'post',
-    data: {
-      msg_id
-    }
+    data: data,
   })
 }
 
-export const restoreTrash = msg_id => {
+export const deviceRestore = (data) => {
   return axios.request({
-    url: 'message/restore',
+    url: '/deviceRestore',
     method: 'post',
-    data: {
-      msg_id
-    }
+    data: data
   })
 }
 
-export const getTreeAlarmData = () => {
+export const getOridata = (data) => {
   return axios.request({
-    url: 'get_tree_Alarm_data',
-    method: 'get'
-  })
-}
-
-export const getAlarmInfo = alarm_id => {
-  return axios.request({
-    url: 'get_alarm_info',
+    url: '/getOridata',
     method: 'post',
-    data: {
-      alarm_id
+    data: data,
+    transformRequest: (data) => {
+      return JSON.stringify(data)
+    },
+    headers: {
+      'Content-Type': 'application/json'
     }
   })
 }
 
-export const getPressureHistory = id => {
-  return axios.request({
-    url: `history?chart=yes&queryTime=1&lang=cn&_dc=${id}`,
-    method: 'get'
-  })
-}
+// export const logout = (token) => {
+//   return axios.request({
+//     url: '/logout',
+//     method: 'post'
+//   })
+// }
 
-export const getOpenData = id => {
-  return axios.request({
-    url: `open?dc=${id}`,
-    method: 'get'
-  })
-}
+// export const getUnreadCount = () => {
+//   return axios.request({
+//     url: 'message/count',
+//     method: 'get'
+//   })
+// }
 
-export const getResults = () => {
-  return axios.request({
-    url: `results`,
-    method: 'get'
-  })
-}
+// export const getMessage = () => {
+//   return axios.request({
+//     url: 'message/init',
+//     method: 'get'
+//   })
+// }
 
-export const getAlarmTrace = () => {
-  return axios.request({
-    url: 'alarmTrace',
-    method: 'get'
-  })
-}
+// export const getContentByMsgId = msg_id => {
+//   return axios.request({
+//     url: 'message/content',
+//     method: 'get',
+//     params: {
+//       msg_id
+//     }
+//   })
+// }
 
-export const getAlarmDetail = () => {
-  return axios.request({
-    url: 'alarmDetail',
-    method: 'get'
-  })
-}
+// export const hasRead = msg_id => {
+//   return axios.request({
+//     url: 'message/has_read',
+//     method: 'post',
+//     data: {
+//       msg_id
+//     }
+//   })
+// }
 
+// export const removeReaded = msg_id => {
+//   return axios.request({
+//     url: 'message/remove_readed',
+//     method: 'post',
+//     data: {
+//       msg_id
+//     }
+//   })
+// }
+
+// export const restoreTrash = msg_id => {
+//   return axios.request({
+//     url: 'message/restore',
+//     method: 'post',
+//     data: {
+//       msg_id
+//     }
+//   })
+// }
+
+// export const getTreeAlarmData = () => {
+//   return axios.request({
+//     url: 'get_tree_Alarm_data',
+//     method: 'get'
+//   })
+// }
+
+// export const getAlarmInfo = alarm_id => {
+//   return axios.request({
+//     url: 'get_alarm_info',
+//     method: 'post',
+//     data: {
+//       alarm_id
+//     }
+//   })
+// }
+
+// export const getPressureHistory = id => {
+//   return axios.request({
+//     url: `history?chart=yes&queryTime=1&lang=cn&_dc=${id}`,
+//     method: 'get'
+//   })
+// }
+
+// export const getOpenData = id => {
+//   return axios.request({
+//     url: `open?dc=${id}`,
+//     method: 'get'
+//   })
+// }
+
+// export const getResults = () => {
+//   return axios.request({
+//     url: `results`,
+//     method: 'get'
+//   })
+// }
+
+// export const getAlarmTrace = () => {
+//   return axios.request({
+//     url: 'alarmTrace',
+//     method: 'get'
+//   })
+// }
+
+// export const getAlarmDetail = () => {
+//   return axios.request({
+//     url: 'alarmDetail',
+//     method: 'get'
+//   })
+// }

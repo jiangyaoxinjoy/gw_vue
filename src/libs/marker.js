@@ -1,7 +1,6 @@
-function SquareOverlay (center, length, color,map,deviceId ,fn) {
+function SquareOverlay (center,length,map,deviceId ,fn) {
   this._center = center;
   this._length = length;
-  this._color = color; 
   this._map = map 
   this._deviceId = deviceId
   this.name = 'myMarker'
@@ -26,18 +25,24 @@ SquareOverlay.prototype.initialize = function (map) {
   // 可以根据参数设置元素外观   
   div.style.width = this._length + "px";    
   div.style.height = this._length + "px";   
-  div.style.boxShadow = '0px 0px 25px inset' + this._color
+  // div.style.boxShadow = '0px 0px 25px inset' + this._color
   // div.style.boxShadow = 'rgb(0, 255, 128) 0px 0px 25px inset'  
   // div.style.background = this._color;  
-  div.style.borderRadius = '50%'  
-  div.style.animation = 'scaleDraw 5s infinite'
+  // div.style.borderRadius = '50%'  
+  // div.style.animation = 'scaleDraw 5s infinite'
 
-  var span = document.createElement("span"); 
-  span.style.width = this._length/3 + "px";    
-  span.style.height = this._length/3 + "px";  
-  span.style.background = this._color;  
-  span.style.borderRadius = '50%'    
-  div.appendChild(span)    
+  // var span = document.createElement("span"); 
+  // span.style.width = this._length/3 + "px";    
+  // span.style.height = this._length/3 + "px";  
+  // span.style.background = this._color;  
+  // span.style.borderRadius = '50%'    
+  // div.appendChild(span)  
+  // 
+  var img = document.createElement("img"); 
+  img.src = require("@/assets/images/marker.png")
+  img.style.width = this._length + "px";    
+  // img.style.height = this._length + "px";   
+  div.appendChild(img)  
   // 将div添加到覆盖物容器中   
   map.getPanes().labelPane.appendChild(div);      
   // 保存div实例   
@@ -68,6 +73,7 @@ SquareOverlay.prototype.show = function() {
 }      
 // 实现隐藏方法  
 SquareOverlay.prototype.hide = function() {    
+  console.log(this._div)
   if (this._div) {    
       this._div.style.display = "none";    
   }    
@@ -109,4 +115,5 @@ SquareOverlay.prototype.addEventListener = function(event,fun){
 //         this._div['on'+event] = fun;
 //     }
 
-module.exports = SquareOverlay;
+// module.exports = SquareOverlay;
+export default SquareOverlay;

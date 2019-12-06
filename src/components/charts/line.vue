@@ -1,5 +1,6 @@
 <template>
-  <div ref="dom" class="charts chart-line"></div>
+  <div ref="dom" id="dom" class="charts chart-line">
+  </div>
 </template>
 
 <script>
@@ -11,7 +12,7 @@ export default {
   props: {
     value: Object,
     value1: Number,
-    value2: Number
+    value2: Number,
   },
   data () {
     return {
@@ -32,6 +33,22 @@ export default {
       this.$nextTick(() => {
         let xAxisData = Object.keys(this.value)
         let seriesData = Object.values(this.value)
+        if (xAxisData.length === 0) {   
+          var nodata=document.getElementById("nodata");      
+          if(!nodata) {
+            var p = document.createElement("p");
+            p.className = 'nodata'
+            p.id = 'nodata'
+            p.innerHTML = '暂无数据'; 
+            document.getElementById("dom").appendChild(p);
+          }
+        } else {
+          var p=document.getElementById("nodata");
+          console.log(p)
+          if(p) {
+            p.parentNode.removeChild(p);
+          }          
+        }
         var value1 = []
         var value2 = []
         seriesData.forEach(() => {
@@ -95,3 +112,11 @@ export default {
   }
 }
 </script>
+<style type="text/css">
+.nodata{
+  position: absolute;
+  top: 40%;
+  left: 50%;
+  color: #000;
+}
+</style>

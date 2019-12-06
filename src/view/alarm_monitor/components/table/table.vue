@@ -11,7 +11,7 @@
     >
       <div class="table_filter" slot="header">
         <RadioGroup class="group1" v-model="params.alarmType" type="button" @on-change="alarmTypeChange">
-          <!-- <Radio label="0">全部</Radio> -->
+          <!-- <Radio :label="0">全部</Radio> -->
           <Radio v-for="item in alarmTypeList" :label="item.key"  :key="item.id">{{item.title}}</Radio>
         </RadioGroup>
         <Companyselect :width="150" :companyList="companyList" :selectCompany="params.companyId" @changeComId="companyChange"/>
@@ -36,7 +36,7 @@ export default {
   data () {
     return {
       params: {
-        alarmType: '10',
+        alarmType: 1,
         limit: 100,
         offset: 0,
         pageNum: 1,
@@ -124,8 +124,7 @@ export default {
         this.getCompanyList()
       }
       this.params.companyId = this.comId
-      this.queryTableData()
-      
+      this.queryTableData()    
     },
     queryTableData () {
       let data = JSON.parse(JSON.stringify(this.params))

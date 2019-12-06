@@ -4,7 +4,6 @@
     v-model="modal"
     title="添加设备"
     :mask-closable="false"
-    :footer-hide="true"
     @on-visible-change="changeState">
     <Form
       :model="modalForm"
@@ -24,14 +23,14 @@
       <FormItem label="地址" prop="address">
         <Input type="text" v-model="modalForm.address" placeholder="输入地址"></Input>
       </FormItem>
-      <FormItem label="水压阀值" prop="value">
-        <Input type="text" v-model="modalForm.value" placeholder="输入水压阀值" number></Input>
-      </FormItem>
-      <FormItem>
-        <Button type="primary" @click="handleSubmit('modalForm')">提交</Button>
-        <Button style="margin-left: 8px" @click="closeBtn">取消</Button>
-      </FormItem>
+      <FormItem label="开水阈值" prop="value">
+        <Input type="text" v-model="modalForm.value" placeholder="输入开水阀值" number></Input>
+      </FormItem>     
     </Form>
+    <div slot="footer">      
+      <Button @click="closeBtn">取消</Button>
+      <Button type="primary" @click="handleSubmit('modalForm')">提交</Button>
+    </div>
   </Modal>
 </template>
 <script>

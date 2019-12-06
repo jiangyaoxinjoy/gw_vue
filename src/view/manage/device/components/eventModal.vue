@@ -152,10 +152,10 @@ export default {
           render: (h, params) => {
             let text = ''
             switch (params.row.alert_type) {
-              case '20':
+              case '120':
                 text = '阀门打开'
                 break
-              case '30':
+              case '130':
                 text = '撞倒'
                 break
               case '60':
@@ -203,10 +203,10 @@ export default {
           render: (h, params) => {
             let text = ''
             switch (params.row.alert_type) {
-              case '20':
+              case '120':
                 text = '阀门打开'
                 break
-              case '30':
+              case '130':
                 text = '撞倒'
                 break
               case '60':
@@ -226,12 +226,12 @@ export default {
           key: 'cola',
           minWidth: 60
         },
-        {
-          title: '状态',
-          render: (h, params) => {
-            return h('span', '已解析')
-          }
-        }
+        // {
+        //   title: '状态',
+        //   render: (h, params) => {
+        //     return h('span', '已解析')
+        //   }
+        // }
       ]
     }
   },

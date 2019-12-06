@@ -55,24 +55,36 @@ export default {
           key: 'alert_type',
           minWidth: 120,
           render: (h, params) => {
-            let text = ''
+            let texts = ''
             switch (params.row.alert_type) {
-              case '20':
-                text = '阀门打开'
-                break
-              case '30':
-                text = '撞倒'
-                break
               case '60':
-                text = '水压异常'
-                break
+                texts = '水压异常'
+                break;
+              case '120':
+                texts = '阀门开启'
+                break;
+              case '130':
+                texts = '撞倒'
+                break;
               case '70':
-                text = '失联'
-                break
+                texts = '离线'
+                break;
+              case '80':
+                texts = '水压恢复'
+                break;
+              case '90':
+                texts = '阀门已关闭'
+                break;
+              case '100':
+                texts = '撞倒恢复'
+                break;
+              case '110':
+                texts = '离线恢复'
+                break;
               default:
-                break
+                break;
             }
-            return h('span', text)
+            return h('span', texts)
           }
         },
         {

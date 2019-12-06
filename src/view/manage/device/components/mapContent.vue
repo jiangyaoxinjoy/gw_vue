@@ -2,7 +2,7 @@
 <div>
   <Spin size="large" fix v-if="loading"></Spin>
   <baidu-map
-    ak="QPPRPzUYlpEqGNkyylz2OuTBQCeWVHAd"
+    :ak="mapAk"
     class="bm-view"
     :center="{lng: centerMark.lng, lat: centerMark.lat}"
     :zoom="zoom"
@@ -67,9 +67,7 @@ export default {
   filters: {
     filterStateText (val) {
       if (val === '70') {
-        return '异常'
-      } else if (val === '80') {
-        return '故障'
+        return '离线'
       } else {
         return '在线'
       }
@@ -116,7 +114,8 @@ export default {
       'deviceParams'
     ]),
     ...mapState({
-      centerMark: state => state.device.centerMark
+      centerMark: state => state.device.centerMark,
+      mapAk: state => state.user.mapAk
     }),
     stateColor () {
       if (this.infoWindow.state !== '70' && this.infoWindow.state !== '80') {

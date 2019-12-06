@@ -100,8 +100,8 @@ export const getDate = (sj, startType) => {
     case 'hour':
       str = add0(hour) + ':' + add0(minute)
       break
-    case 'month-date': 
-      str = add0(month) + ':' + add0(date)
+    case 'year-month-date': 
+      str = year + '-' + add0(month) + '-' + add0(date)
       break
     default:
       str = year + '-' + add0(month) + '-' + add0(date) + ' ' + add0(hour) + ':' + add0(minute) + ':' + add0(second)
@@ -109,6 +109,36 @@ export const getDate = (sj, startType) => {
   }
   return str
 }
+
+const getDateRangeLength = (startTime, endTime, diffType) => {
+    //将xxxx-xx-xx的时间格式，转换为 xxxx/xx/xx的格式
+    startTime = startTime.replace(/\-/g, "/");
+    endTime = endTime.replace(/\-/g, "/");
+    //将计算间隔类性字符转换为小写
+    diffType = diffType.toLowerCase();
+    var sTime =new Date(startTime); //开始时间
+    var eTime =new Date(endTime); //结束时间
+    //作为除数的数字
+    var timeType =1;
+    switch (diffType) {
+        case"second":
+            timeType =1000;
+            break;
+        case"minute":
+            timeType =1000*60;
+            break;
+        case"hour":
+            timeType =1000*3600;
+            break;
+        case"day":
+            timeType =1000*3600*24;
+            break;
+        default:
+            break;
+    }
+    return parseInt((eTime.getTime() - sTime.getTime()) / parseInt(timeType));
+};
+
 
 export const daterange = (day) => {
   const end = new Date();
@@ -124,4 +154,63 @@ export const daterange = (day) => {
   var endStr = endYear + '-' + add0(endMonth) + '-' + add0(endDay)
   // console.log(startStr, endStr)
   return [startStr, endStr];
+}
+
+//获取日期的方法
+const getNewDate = (baseDate,count) => {
+    var baseTime = new Date(baseDate)
+    baseTime.setDate(baseTime.getDate() + count);
+    var year = baseTime.getFullYear();
+    var month = baseTime.getMonth() + 1;
+    var day = baseTime.getDate();
+    if (month < 10) {
+        month = "0" + month
+    }
+    if (day < 10) {
+        day = "0" + day
+    }
+    return year + "-" + month + "-" + day;
+};
+
+export const getDateRangeArray = (startDate,endDate,diffType) => {
+  var length = getDateRangeLength(startDate,endDate,diffType);
+  var dateArray = [];
+  //dateArray.push(startDate);
+  //console.log(length);
+  dateArray.push(endDate)
+  for(var i=1;i<=length;i++){
+      dateArray.push(getNewDate(endDate,-i));
+  }
+  return dateArray.sort();
+}
+
+export const getAlertType = typeNum => {
+  var typeText = ''
+  switch (typeNum) {
+    case '60':
+      typeText = '水压异常'
+      break
+    case '70':
+      typeText = '失联'
+      break
+    case '120':
+      typeText = '阀门打开'
+      break 
+    case '130':
+      typeText = '撞倒'
+      break 
+    case '80':
+      typeText = '水压恢复'
+      break 
+    case '90':
+      typeText = '偷水恢复'
+      break 
+    case '100':
+      typeText = '撞倒恢复'
+      break 
+    case '110':
+      typeText = '离线恢复'
+      break
+  }
+  return typeText
 }

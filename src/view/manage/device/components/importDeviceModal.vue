@@ -3,8 +3,7 @@
     v-model="modal"
     title="导入设备"
     :mask-closable="false"
-    :footer-hide="true"
-    :width="300"
+    :width="350"
     @on-visible-change="uploadModalChange">
     <Form
       ref="uploadForm"
@@ -20,13 +19,13 @@
       <FormItem label="上传模式" prop="importType">
         <RadioGroup v-model="uploadForm.importType">
           <Radio :label="1">增量上传</Radio>
-          <Radio :label="2">覆盖上传</Radio>
+          <!-- <Radio :label="2">覆盖上传</Radio> -->
         </RadioGroup>
       </FormItem>
-      <FormItem label="水压阀值" prop="value">
+      <FormItem label="开水阈值" prop="value">
         <Input type="text" v-model="uploadForm.value" placeholder="输入水压阀值" number></Input>
       </FormItem>
-      <FormItem class="fileWrap" label="选择文件">
+      <FormItem class="fileWrap" label="选择文件" prop="file">
         <Upload
           ref="upload"
           class="tbHBtn"
@@ -37,19 +36,19 @@
         >
           <Button type="primary" icon="ios-cloud-upload-outline">导入文件</Button>
         </Upload>
-        <div class="upLoadname" v-if="uploadForm.file !== '' && uploadForm.file !== null">Upload file: {{ uploadForm.file.name }} </div>
-      </FormItem>
-      <FormItem class="footer">
-        <Button
-          v-if="uploadForm.file !== '' && uploadForm.file !== null"
-          type="warning"
-          @click="upload"
-          :loading="uploadLoadingStatus"
-        >
-          {{ uploadLoadingStatus ? 'Uploading' : '点击上传' }}
-        </Button>
+        <p class="upLoadname" v-if="uploadForm.file !== '' && uploadForm.file !== null">Upload file: {{ uploadForm.file.name }} </p>
       </FormItem>
     </Form>
+    <div slot="footer">
+      <Button @click="closeBtn" type="default">取消</Button>
+      <Button
+        type="warning"
+        @click="upload"
+        :loading="uploadLoadingStatus"
+      >
+        {{ uploadLoadingStatus ? 'Uploading' : '上传' }}
+      </Button>
+    </div>
   </Modal>
 </template>
 <script>
@@ -109,13 +108,27 @@ export default {
       if(!val) {
         this.$refs.uploadForm.resetFields()
         this.uploadForm.file = ''
+        this.uploadLoadingStatus = false
         this.$emit("uploadChangeState", false, upload)
       }
+    },
+    closeBtn () {
+      this.modal = false
+      this.uploadModalChange(false)
     },
     upload () {
       this.uploadLoadingStatus = true
       this.$refs.uploadForm.validate((valid) => {
         if (valid) {
+          if (this.uploadForm.file === '') {
+            this.$Message.error({
+                content: '未选择上传文件',
+                duration: 5,
+                closable: true
+            });
+            this.uploadLoadingStatus = false
+            return false
+          }
           let formdata = new FormData()
           formdata.append('file', this.uploadForm.file)
           formdata.append('companyId', this.uploadForm.companyId)
@@ -138,11 +151,16 @@ export default {
                 })
               }
             }
-            this.$refs.uploadForm.resetFields()
-            this.uploadForm.file = ''
+            setTimeout( () => {
+              this.$refs.uploadForm.resetFields()
+              this.uploadForm.file = ''
+              this.uploadLoadingStatus = false
+              this.modal = false
+              this.uploadModalChange(false, true)
+            },500)
+          }).catch( err => {
             this.uploadLoadingStatus = false
-            this.modal = false
-            this.uploadModalChange(false, true)
+            this.$Message.error(err)
           })
         } else {
           this.uploadLoadingStatus = false
@@ -157,3 +175,14 @@ export default {
   }
 }
 </script>
+<style type="less">
+.upLoadname{
+  white-space: nowrap;
+  overflow:hidden;
+  -ms-text-overflow: ellipsis;
+  text-overflow: ellipsis;
+  position: absolute;
+  bottom: -35px;
+  left: 10px;
+}
+</style>

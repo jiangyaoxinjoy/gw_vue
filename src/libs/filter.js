@@ -7,17 +7,45 @@ let alarmTypeFilter = val => {
       type = '水压异常'
       break;
     case '20':
-      type = '阀门打开'
+      type = '阀门开启'
       break;
     case '30':
       type = '撞到'
       break;
     case '70':
-      type = '设备异常'
+      type = '离线'
       break;  
+    // case '80':
+    //   type = '故障'
+    //   break;
     case '':
       type = '正常'
       break;
+    case '60':
+      type = '正常'
+      break;
+    default:
+      type = ''
+      break;
+  }
+  return type
+}
+
+let chooseTypeFilter = (val) => {
+  let type = ''
+  switch (val) {
+    case 1:
+      type = '水压异常'
+      break;
+    case 2:
+      type = '阀门开启'
+      break;
+    case 3:
+      type = '撞到'
+      break;
+    case 4:
+      type = '离线'
+      break; 
     default:
       type = ''
       break;
@@ -79,7 +107,7 @@ let alarmHistory = (value) => {
       method += '水压历史数据'
       break
     case '20':
-      method += '阀门打开历史数据'
+      method += '阀门开启历史数据'
       break
     default:
       method += '历史数据'
@@ -95,5 +123,6 @@ export default {
   notifyTypeMethod,
   timeFilter,
   time,
-  timeYearFilter
+  timeYearFilter,
+  chooseTypeFilter
 }

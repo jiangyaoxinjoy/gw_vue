@@ -1,7 +1,7 @@
 <template>
   <Modal
       v-model="modal"
-      :width="60"
+      :width="70"
       :footer-hide="true"
       @on-visible-change="stateChange">
     <div style="background:#eee;padding: 20px">
@@ -30,7 +30,7 @@
 </template>
 <script>
 import { mapState, mapActions } from 'vuex'
-import { daterange, getDate }  from '@/libs/tools'
+import { daterange, getDate, getDateRangeArray}  from '@/libs/tools'
 import { ChartWater } from '_c/charts/'
 export default {
   name: 'waterContent',
@@ -95,19 +95,24 @@ export default {
     })
   },
   watch: {
-    selectTime: {
-      handler(val) {
+    modal (val) {
+      if (val) {
         this.deviceWater()
-      },
-      // immediate: true
-    },
-    deviceId: {
-      handler(val) {
-        if(this.waterModal) {
-          this.deviceWater()
-        }
       }
     }
+    // selectTime: {
+    //   handler(val) {
+    //     this.deviceWater()
+    //   },
+    //   // immediate: true
+    // },
+    // deviceId: {
+    //   handler(val) {
+    //     if(this.waterModal) {
+    //       this.deviceWater()
+    //     }
+    //   }
+    // }
   },
   methods: {
     ...mapActions(['getDeviceWater']),
@@ -122,20 +127,38 @@ export default {
     },
     timeChange (val) {
       this.selectTime = val
+      this.deviceWater()
     },
     deviceWater () {
       this.getDeviceWater({selectTime: this.selectTime, device_id: this.deviceId}).then(res => {
-        console.log(res)
-        var lineKey = []
+        // console.log(res)
+        // var lineKey = []
         var lineValue = []
-        if (res != null) {
-           _(res).forEach(function(value) {
-            console.log(value);
-            lineValue.push(value.water_yield)
-            lineKey.push(getDate(value.record_time,'month-date'))
-          });
-        }  
-        this.lineKey = lineKey
+        var rangeDate =  getDateRangeArray(this.selectTime[0],this.selectTime[1], 'day')
+        // console.log(rangeDate)
+        _(rangeDate).forEach(function(value) {
+            var item = _.find(res, function (o) {
+              console.log(getDate(o.record_time,'month-date'))
+              console.log(value)
+              return getDate(o.record_time,'year-month-date') === value
+            });
+            if (item) {
+              lineValue.push(item.water_yield)
+            } else {
+              lineValue.push(0)
+            }
+            // console.log(value);
+            // lineValue.push(value.water_yield)
+            // lineKey.push(getDate(value.record_time,'month-date'))
+        });
+        // if (res != null) {
+        //   _(res).forEach(function(value) {
+        //     // console.log(value);
+        //     lineValue.push(value.water_yield)
+        //     // lineKey.push(getDate(value.record_time,'month-date'))
+        //   });
+        // }  
+        this.lineKey = rangeDate
         this.lineValue = lineValue    
       })
     }

@@ -54,7 +54,7 @@ export default {
       ifManageUser: false,
       ifManageCompany: false,
       ifManageDevice: false,
-      activeName: this.$router.path,
+      // activeName: this.$router.path,
       logo: ''
     }
   },
@@ -72,7 +72,12 @@ export default {
       companyIcon: state => state.user.companyIcon,
       baseUrl: state => state.user.baseUrl
     }),
-    
+    activeName: {
+      get() {
+        return this.$route.matched[1].name
+      },
+      set(){}
+    }
   },
   watch: {
     companyIcon : {
@@ -98,9 +103,9 @@ export default {
     }
   },
   methods:{
-    menuList(){  // 这个方法里定义好，高亮和路由
-     this.activeName= this.$route.matched[1].name
-    },
+    // menuList(){  // 这个方法里定义好，高亮和路由
+    //  this.activeName = this.$route.matched[1].name
+    // },
     goIndex() {
       // this.$router.go(0)
       // this.$router.push({ path: '/' })
@@ -108,7 +113,7 @@ export default {
     }
   },    
   mounted() {
-    this.menuList()
+    // this.menuList()
   }
 }
 </script>

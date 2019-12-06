@@ -3,7 +3,6 @@
     v-model="editshow"
     title="编辑人员信息"
     :mask-closable="false"
-    :footer-hide="true"
     @on-visible-change="changeState"
   >
       <Form :model="modalForm" :label-width="80" ref="modalForm" :rules="ruleValidate" @keydown.enter.native="handleSubmit">
@@ -35,11 +34,11 @@
             <Radio :label="1">使用</Radio>
           </RadioGroup>
         </FormItem>
-        <FormItem>
-          <Button type="primary" @click="handleSubmit">提交</Button>
-          <Button style="margin-left: 8px" @click="handlerClose">取消</Button>
-        </FormItem>
       </Form>
+      <div slot="footer">
+        <Button @click="handlerClose">取消</Button>
+        <Button type="primary" @click="handleSubmit">提交</Button>
+      </div>
   </Modal>
 </template>
 <script>

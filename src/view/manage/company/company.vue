@@ -24,7 +24,6 @@
   <Modal
     v-model="modal"
     :title="modalState == 'new' ? '新增公司' : '修改公司信息'"
-    :footer-hide="true"
     @on-visible-change="changeState"
     :mask-closable="false"
   >
@@ -43,11 +42,14 @@
         <FormItem label="公司地址" prop="address">
           <Input v-model="modalForm.address" placeholder="输入公司地址"></Input>
         </FormItem>
-        <FormItem label="最低阀值" prop="value1">
+        <FormItem label="最低水压阀值" prop="value1">
           <Input v-model="modalForm.value1" placeholder="输入最低阀值" number></Input>
         </FormItem>
-        <FormItem label="最高阀值" prop="value2">
+        <FormItem label="最高水压阀值" prop="value2">
           <Input v-model="modalForm.value2" placeholder="输入最高阀值" number></Input>
+        </FormItem>
+        <FormItem label="离线时间" prop="offtime">
+          <InputNumber :max="720" :min="24" v-model="modalForm.offtime"></InputNumber>小时
         </FormItem>
         <FormItem label="设置图标">
           <Upload
@@ -63,12 +65,12 @@
           </Upload>
           <div class="upLoadname" v-if="modalForm.imgFile !== '' && modalForm.imgFile !== null">Upload file: {{ modalForm.imgFile.name }} </div>
         </FormItem>
-        <FormItem>
-            <Button type="primary" @click="handleSubmit('modalForm')">提交</Button>
-            <Button v-if="modalState == 'new'" @click="handleReset('modalForm')" style="margin-left: 8px">重置</Button>
-            <Button v-if="modalState == 'edit'" @click="handleClose('modalForm')" style="margin-left: 8px">取消</Button>
-        </FormItem>
       </Form>
+      <div slot="footer">
+        <Button v-if="modalState == 'new'" @click="handleReset('modalForm')">重置</Button>
+        <Button v-if="modalState == 'edit'" @click="handleClose('modalForm')">取消</Button>
+        <Button type="primary" @click="handleSubmit('modalForm')">提交</Button>
+      </div>
   </Modal>
 </div>
 </template>
@@ -104,10 +106,11 @@ export default {
       modalForm: {
         name: '',
         address: '',
-        value1: '',
-        value2: '',
+        value1: 0.18,
+        value2: 0.35,
         imgFile: '',
-        system_name: '管威智慧云平台'
+        system_name: '管威智慧云平台',
+        offtime: 24
       },
       curId: '',
       modalState: '',
@@ -127,6 +130,9 @@ export default {
           // { required: true, message: '阀值不能为空', trigger: 'change' },
           { validator: validateV2, trigger: 'change'}
         ],
+        offtime: [
+         { required: true, type: 'number', min:24, trigger: 'blur' },
+        ]
       },
       columns: [
         {
@@ -187,11 +193,13 @@ export default {
       this.modalForm.value2 = row.value2
       this.modalForm.imgFile = ''
       this.modalForm.system_name = row.system_name
+      this.modalForm.offtime = row.offtime
       this.curId = row.Id
       this.modal = true
     },
     handleSubmit (name) {
       this.$refs[name].validate((valid) => {
+        // this.$Message.error(valid);
         if (valid) {
           let formdata = new FormData()
           formdata.append('file', this.modalForm.imgFile)
@@ -201,7 +209,7 @@ export default {
           formdata.append('name', this.modalForm.name)
           formdata.append('system_name', this.modalForm.system_name)
           formdata.append('token', this.token)
-
+          formdata.append('offtime', this.modalForm.offtime)
           if (this.modalState === 'new') {           
             this.addCom(formdata).then(res => {
               if (res.status !== 0) {

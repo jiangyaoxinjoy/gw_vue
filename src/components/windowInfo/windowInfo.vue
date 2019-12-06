@@ -1,9 +1,7 @@
 <template>
   <div class="info">
     <NotifyModal :notifyModal="notifyModal" :userAllNotify="userAllNotify" @stateChange="notifyModalChange"/>
-
     <IndexHistoryModal v-if="history" :modalShow="historyModal" :deviceId="alarmInfo.deviceId" @hideModal="historyModal = false" :alarmType="alarmInfo.alarm_type"/>
-
     <div style="background-color: #eee;padding: 5px; position: relative;">
       <div class="ivu-card ivu-card-bordered">
         <div class="ivu-card-head">
@@ -16,13 +14,10 @@
               {{alarmInfo.alarm_type | alarmTypeFilter}}
               <div class="tag ivu-tag ivu-tag-default ivu-tag-border ivu-tag-checked">
                 <span v-if="alarmInfo.isnotify === 1" class="ivu-tag-text ivu-tag-color-default">
-                  通知已到达
-                </span> 
-                <span v-if="alarmInfo.isnotify === 2" class="ivu-tag-text ivu-tag-color-default">
-                  未通知
+                  已有通知到达
                 </span> 
                 <span v-if="alarmInfo.isnotify === 0" class="ivu-tag-text ivu-tag-color-default">
-                  通知未到达
+                 有通知未到达
                 </span> 
               </div>
               <br>
@@ -37,7 +32,7 @@
           <div class="divider ivu-divider ivu-divider-horizontal ivu-divider-default ivu-divider-with-text-left">
             <span class="ivu-divider-inner-text">地址</span>
           </div>
-          <p>{{alarmInfo.address}}</p>
+          <p>{{alarmInfo.address}} <span v-if="alarmInfo.descrip" class="rowDescrip">({{alarmInfo.descrip}})</span></p>
           <div class="ivu-cell cell-contact" @click="showcell">
             <div class="ivu-cell-item">
               <div class="ivu-cell-main">
@@ -168,7 +163,8 @@ export default {
         user_id: "",
         device_id:'',
         tel:'',
-        name:''
+        name:'',
+        alert_id: ''
       }
     }
   },
@@ -182,7 +178,7 @@ export default {
           text = '水压' + cola + 'Mpa 阈值 ' + this.alarmInfo.value1 + '~' + this.alarmInfo.value2
           break
         case '20':
-          text = '阀门打开' + this.alarmInfo.cola + '圈, 估计出水量x 吨'
+          text = '阀门打开' + this.alarmInfo.cola + '圈, 出水量约 '+this.alarmInfo.cold.toFixed(2)+' 吨'
           break
         case '30':
           text = ''
@@ -206,6 +202,7 @@ export default {
       this.userAllNotify.user_id = item.data[0].user_id
       this.userAllNotify.name = item.name
       this.userAllNotify.tel = item.phone
+      this.userAllNotify.alert_id = item.data[0].alert_id
       this.notifyModal = true
     },
     notifyModalChange (val) {
@@ -214,7 +211,7 @@ export default {
     historyBtnClick () {
       this.historyModal = !this.historyModal
     }
-  }
+  },
 }
 </script>
 <style lang="less" scoped>

@@ -61,7 +61,7 @@ export default {
        this.$emit('stateChange', val)
     },
     getData () {
-      getUserNotifyHistory({'device_id': this.userAllNotify.device_id, 'user_id': this.userAllNotify.user_id, 'token': this.token })
+      getUserNotifyHistory({'device_id': this.userAllNotify.device_id, 'user_id': this.userAllNotify.user_id,'alert_id':this.userAllNotify.alert_id, 'token': this.token })
       .then(res => {
         // console.log(res)
         if (res.data.status === 0) {

@@ -3,32 +3,24 @@
     v-model="showModal"
     title="修改密码"
     :mask-closable="false"
-    :footer-hide="true"
     @on-visible-change="model_change"
   >
     <Form :model="formItem" ref="formItem" :rules="ruleCustom"  :label-width="80">
-      <input type="text" name="a" style="display: none"/>
-      <input type="password" name="b" style="display: none"/>
-      <!-- <FormItem>      
-        <Input autocomplete="off" style="display: none" clearable type="text" v-model="formItem.a" placeholder="输入原始密码..."></Input>
-      </FormItem>
-      <FormItem>      
-        <Input autocomplete="off" style="display: none" clearable type="password" v-model="formItem.b" placeholder="输入原始密码..."></Input>
-      </FormItem> -->
-      <FormItem label="原始密码" prop="originPwd">      
-        <Input autocomplete="off" clearable type="password" v-model="formItem.originPwd" placeholder="输入原始密码..."></Input>
+      <FormItem label="原始密码" prop="originPwd">     
+        <Input autocomplete="new-password" v-model="formItem.originPwd" type="password" v-show="false"></Input> 
+        <Input autocomplete="new-password" clearable type="password" v-model="formItem.originPwd" placeholder="输入原始密码..."></Input>
       </FormItem>
       <FormItem label="新密码" prop="newPwd">   
-        <Input autocomplete="off"  clearable type="password" v-model="formItem.newPwd" placeholder="输入新密码..."></Input>
+        <Input autocomplete="new-password"  clearable type="password" v-model="formItem.newPwd" placeholder="输入新密码..."></Input>
       </FormItem>
       <FormItem label="确认密码" prop="againPwd">     
-        <Input autocomplete="off" clearable type="password" v-model="formItem.againPwd" placeholder="再输入一遍新密码..."></Input>
-      </FormItem>
-      <FormItem>
-        <Button  @click="close">取消</Button>
-        <Button type="primary" style="margin-left: 8px" @click="handleSubmit('formItem')">提交</Button>
+        <Input autocomplete="new-password" clearable type="password" v-model="formItem.againPwd" placeholder="再输入一遍新密码..."></Input>
       </FormItem>
     </Form>
+    <div slot="footer">
+      <Button  @click="close">取消</Button>
+      <Button type="primary" style="margin-left: 8px" @click="handleSubmit('formItem')">提交</Button>
+    </div>
   </Modal>
 </template>
 <script>
@@ -112,6 +104,7 @@ export default {
           payload.userId = this.$store.state.user.userId
           this.changePsd(payload).then(res => {
             if (res.status === 0) {
+              this.close()
               this.$router.push({
                 name: 'login'
               })

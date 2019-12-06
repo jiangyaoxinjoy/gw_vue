@@ -4,9 +4,8 @@
     title="修改设备信息"
     :mask-closable="false"
     @on-visible-change="closeEditModal"
-    :footer-hide="true"
     class-name="vertical-center-modal"
-    :styles="{top: modalTop+'px'}"
+    width="90%"
   >
     <Divider orientation="left">通知用户</Divider>
     <p class="notify_p" v-for="item in users" :key="item.Id" >用户名：{{item.name}} <span>电话号码：{{item.phone}}</span></p>
@@ -16,52 +15,75 @@
       :label-width="80"
       ref="mapItem"
       :rules="ruleValidate"
+  
     >
-      <FormItem label="设备号" prop="device_id">
+    <Row :gutter="8">
+        <Col span="8">
+             <FormItem label="设备号" prop="device_id">
           <Input v-model="mapItem.device_id" placeholder="输入设备号"></Input>
       </FormItem>
-      <FormItem label="所属公司" prop="company_id">
-        <Select v-model="mapItem.company_id" style="width:200px">
+        </Col>
+        <Col span="8">
+            <FormItem label="所属公司" prop="company_id">
+        <Select v-model="mapItem.company_id">
           <Option v-for="item in companyList" :value="item.Id" :key="item.Id">{{ item.name }}</Option>
         </Select>
       </FormItem>
-      <FormItem label="水压阀值" prop="value">
-        <Input type="text" v-model="mapItem.threshold" placeholder="输入水压阀值" number></Input>
+        </Col>
+        <Col span="8">
+            <FormItem label="开水阈值" prop="value">
+        <Input type="text" v-model="mapItem.threshold" placeholder="输入开水阀值" number></Input>
       </FormItem>
+        </Col>
+    </Row>
+    <Row :gutter="8">
+        <Col span="12">
+             <FormItem label="地址" v-if="ifSetup">
+        <Input 
+          v-model="mapItem.address" 
+          placeholder="输入地址"
+          @on-change="geocoder"
+        ></Input>
+      </FormItem>
+        </Col>
+        <Col span="12">
+          <FormItem label="备注" v-if="ifSetup">
+            <Input 
+              v-model="mapItem.descrip" 
+              placeholder="输入地址"
+            ></Input>
+          </FormItem>
+        </Col>
+    </Row>
+      <Spin size="large" fix v-if="spinShow"></Spin>
       <baidu-map
+        :ak="mapAk"
         class="map"
-        :center="{lng: mapItem.lng,lat: mapItem.lat}"
+        :center="center"
         :zoom="18"
         :scroll-wheel-zoom="true"
         @ready="map_handler"
         style="display: flex; flex-direction: column"
         v-if="ifSetup"
-      >
-        <FormItem label="地址">
-          <Input 
-            v-model="mapItem.address" 
-            placeholder="输入地址"
-            @on-change="geocoder"
-          ></Input>
-        </FormItem>
-        <bm-view style="width: 100%; height:350px; flex: 1">
+      >       
+        <bm-view style="width: 100%; height:350px;">
         </bm-view>
         <bm-marker
-          :position="{lng: mapItem.lng,lat: mapItem.lat}"
+          :position="center"
           :dragging="true"
           :auto-resize="true"
           @dragend="showPosition">
         </bm-marker>
       </baidu-map>
-      <FormItem class="editmFooter">
-        <Button @click="closeEditModal(false)">取消</Button>
-        <Button :disabled="!canSubmit" type="primary" style="margin-left: 8px" @click="handleSubmit('mapItem')">修改</Button>
-      </FormItem>
     </Form>
+    <div slot="footer">
+      <Button @click="closeEditModal(false)">取消</Button>
+      <Button :disabled="!canSubmit" type="primary" @click="handleSubmit('mapItem')">修改</Button>
+    </div>
   </Modal>
 </template>
 <script>
-import { mapActions} from 'vuex'
+import { mapActions, mapState} from 'vuex'
 import BaiduMap from 'vue-baidu-map/components/map/Map.vue'
 import { BmView, BmMarker} from 'vue-baidu-map'
 import { getClientHeight} from '@/libs/tools' 
@@ -78,11 +100,12 @@ export default {
         return {
           address: '',
           id: '',
-          lng: '',
-          lat: '',
+          lng: 0,
+          lat: 0,
           device_id: '',
           company_id: '',
-          threshold: ''
+          threshold: '',
+          descrip: ''
         }
       }
     },
@@ -103,6 +126,7 @@ export default {
       }
     };
     return {   
+      spinShow: true,
       ruleValidate: {
         device_id: [
           { required: true, message: '设备号不能为空', trigger: 'blur' }
@@ -116,25 +140,39 @@ export default {
       },
       canSubmit: true,
       users: [],
-      windowH: getClientHeight()
+      windowH: getClientHeight(),
+      center: {lng: 0, lat: 0}
     }
   },
   computed: {
+    ...mapState({
+      mapAk: state => state.user.mapAk
+    }),
     modal: {
       get() {
         return this.editModal
       },
       set() {}
     },
-    modalTop () {
-      return (this.windowH - 850 > 0) ? (this.windowH - 850)/2 : 0
-    }
   },
   watch: {
     'mapItem.company_id' : {
       handler(val) {
         // console.log(val)
-        this.getUsers(val)
+        if(val != '') {
+          this.getUsers(val)
+        }
+      },
+      immediate: true
+    },
+    'mapItem.lng' : {
+      handler(val) {
+        if(val != 0) {
+          setTimeout( () => {
+            this.center.lng = val 
+            this.center.lat = this.mapItem.lat
+          },500)
+        }
       },
       immediate: true
     }
@@ -145,11 +183,22 @@ export default {
       this.getNotifyUsers({'company_id': id}).then( res => {
         // console.log(res)
         this.users = res
+        setTimeout( () => {
+          this.spinShow = false
+        },200)
       })
+      // this.$nextTick(() => {
+      //   var box = document.querySelector('.vertical-center-modal>.ivu-modal')
+      //   var reg = /\d+/;
+      //   let height= window.getComputedStyle(box).height.match(reg)[0]
+      //   console.log(height)
+      // })
     },
     handleSubmit (name) {
       this.$refs[name].validate((valid) => {
         if (valid) {
+          // this.mapItem.lng = this.center.lng
+          // this.mapItem.lat = this.center.lat
           this.editDevice(this.mapItem).then(res => {
             if (res.status === 0) {
               this.$Message.success({
@@ -181,6 +230,16 @@ export default {
     closeEditModal(val, edit) {
       if (!val) {
         this.canSubmit = true
+        this.center = {lng: 0, lat: 0}
+        this.mapItem.address = ''
+        this.mapItem.id = ''
+        this.mapItem.lat = 0
+        this.mapItem.lng = 0
+        this.mapItem.device_id = ''
+        this.mapItem.company_id = ''
+        this.mapItem.threshold = ''
+        this.mapItem.descrip= ''
+        this.spinShow = true
         this.$emit('editChangeState',val,edit)
       }
     },
@@ -229,9 +288,6 @@ export default {
     margin-top: 16px;
     margin-bottom: 8px;
   }
- /*  .editModal .ivu-form-item {
-    margin-bottom: 18px;
-  } */
   .notify_p {
     padding: 0 10px 10px 10px;
   }

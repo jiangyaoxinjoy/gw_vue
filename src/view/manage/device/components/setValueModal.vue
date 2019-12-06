@@ -1,20 +1,19 @@
 <template>
-  <Modal v-model="modal" title="设置阀值" @on-visible-change="changeModalState"
-    :footer-hide="true">
+  <Modal v-model="modal" title="设置阀值" @on-visible-change="changeModalState">
     <Form
       ref="form"
       :model="form"
       :label-width="70"
       :rules="ruleForm"
     >
-      <FormItem label="水压阀值" prop="value">
-        <Input type="text" v-model="form.value" placeholder="输入水压阀值..." number></Input>
-      </FormItem>
-      <FormItem class="footer">
-        <Button @click="closeModal(false)">取消</Button>
-        <Button type="primary" style="margin-left: 8px" @click="handleSubmit('form')">修改</Button>
-      </FormItem>
+      <FormItem label="开水阈值" prop="threshold">
+        <Input type="text" v-model="form.threshold" placeholder="输入开水阈值..." number></Input>
+      </FormItem>      
     </Form>
+    <div slot="footer">
+      <Button @click="closeModal(false)">取消</Button>
+      <Button type="primary" style="margin-left: 8px" :disabled="ifDisabled" @click="handleSubmit('form')">修改</Button>
+    </div>
   </Modal>
 </template>
 
@@ -30,21 +29,25 @@ export default {
   data() {
     const validateValue = (rule, value, callback) => {
       if ( _.isNumber(value) && value > 0) {
+        this.ifDisabled = false
         callback();
       } else {
-        callback(new Error('请输入正确阀值'));
+        this.ifDisabled = true
+        callback();
+        // callback(new Error('请输入正确阀值'));
       }
     };
     return {
       modal: false,
       form: {
-        value: ''
+        threshold: ''
       },
       ruleForm: {
-        value: [
-          { validator: validateValue, trigger: 'blur' }
+        threshold: [
+          { validator: validateValue, trigger: 'change' }
         ]
       },
+      ifDisabled: true
     }
   },
   watch: {
@@ -54,15 +57,14 @@ export default {
   },
   methods: {
     closeModal(val) {
-      this.form.value = ''
-      this.canSubmit = false
+      this.form.threshold = ''
       this.$emit('closeModal', false)
     },
     handleSubmit (name) {
       this.$refs[name].validate((valid) => {
         if (valid) {
           // this.$Message.info('success!')
-          this.$emit("getValue", this.form.value)
+          this.$emit("getValue", this.form.threshold)
         } else {
           this.$Message.error('Fail!')
         }

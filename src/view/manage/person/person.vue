@@ -109,7 +109,11 @@ export default {
       if (this.companyList.length === 0) {
         this.getCompanyList()
       }
-      this.selectCompany = this.comId
+      if (this.comId === 1) {
+        this.selectCompany = 0
+      } else {
+        this.selectCompany = this.comId
+      }     
       this.initUserList()
     },
     changeCom (val) {

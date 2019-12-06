@@ -16,41 +16,41 @@
     <!-- 筛选框 end -->
     <Menu mode="horizontal" active-name="1" class="menu">
       <div class="wrapper-header-nav-list">
-        <img :src="logomin"/>
-        <h1 class="bb">管威智慧云平台</h1>
+        <img :src="logo"/>
+        <h1 class="bb">{{system_name}}</h1>
       </div>
     </Menu>
     <Layout>
       <Content class="map_content">
         <div class="mapHeader" :style="{width: (windowWidth - 350) +'px'}">
-          <div class="badge_block" @click="alertTypeChoose(0)">
+          <div class="badge_block" @click="alertTypeChoose(0)" :class="alarmType === 0? 'badge_active': ''">
             <Badge :count="detail.alertTotal" type="primary">
               <Icons :size="28" type="xiaohuoshuan"/>
               <span class="badge_label">全部</span>
             </Badge>
           </div>
-          <div class="badge_block" @click="alertTypeChoose(1)">
+          <div class="badge_block" @click="alertTypeChoose(1)" :class="alarmType === 1? 'badge_active': ''">
             <Badge :count="detail.prec" type="success">
               <Icons :size="28" type="shuiyaxiaxian"/>
               <span class="badge_label">水压异常</span>
             </Badge>
           </div>
-          <div class="badge_block" @click="alertTypeChoose(2)">
+          <div class="badge_block" @click="alertTypeChoose(2)" :class="alarmType === 2? 'badge_active': ''">
             <Badge class="badge" :count="detail.opc" type="info">
               <Icons :size="28" type="famen"/>
-              <span class="badge_label">阀门打开</span>
+              <span class="badge_label">阀门开启</span>
             </Badge>
           </div>
-          <div class="badge_block" @click="alertTypeChoose(3)">
+          <div class="badge_block" @click="alertTypeChoose(3)" :class="alarmType === 3? 'badge_active': ''">
             <Badge class="badge" :count="detail.downc" type="warning">
               <Icons :size="28" type="-FireHydrant"/>
               <span class="badge_label">撞倒</span>
             </Badge>
           </div>
-          <div class="badge_block" @click="alertTypeChoose(4)">
+          <div class="badge_block" @click="alertTypeChoose(4)" :class="alarmType === 4? 'badge_active': ''">
             <Badge class="badge" :count="detail.lossc" type="error">
               <Icons :size="30" type="jingbao"/>
-              <span class="badge_label">设备异常</span>
+              <span class="badge_label">离线</span>
             </Badge>
           </div>                          
         </div>
@@ -66,15 +66,26 @@
                 :key="item.Id"
                 :name="index"
               >
-              <Button v-if="item.state === '10'" size="small" type="success">{{item.state | alarmTypeFilter}}</Button>
-              <Button v-if="item.state === '20'" size="small" type="info">{{item.state | alarmTypeFilter}}</Button>
-              <Button v-if="item.state === '30'" size="small" type="warning">{{item.state | alarmTypeFilter}}</Button>
-              <Button v-if="item.state === '70'" size="small" type="error">{{item.state | alarmTypeFilter}}</Button>
+              <div class="rowAddress" slot="label">
+                <p>{{item.address}}</p>
+                <span v-if="item.descrip" class="rowDescrip">({{item.descrip}})</span>
+              </div>             
+              <template v-if="alarmType === 0">
+                <Button v-if="item.state === '10'" size="small" type="success">{{item.state | alarmTypeFilter}}</Button>
+                <Button v-if="item.state === '20'" size="small" type="info">{{item.state | alarmTypeFilter}}</Button>
+                <Button v-if="item.state === '30'" size="small" type="warning">{{item.state | alarmTypeFilter}}</Button>
+                <Button v-if="item.state === '70'" size="small" type="error">{{item.state | alarmTypeFilter}}</Button>
+              </template>
+              <template v-else>
+                <Button v-if="alarmType === 1 " size="small" type="success">水压异常</Button>
+                <Button v-if="alarmType === 2" size="small" type="info">阀门开启</Button>
+                <Button v-if="alarmType === 3" size="small" type="warning">撞倒</Button>
+                <Button v-if="alarmType === 4" size="small" type="error">离线</Button>
+              </template>             
             </Cell>
             </CellGroup>
           </Drawer>
         </div>
-
         <div class="charts_list" style="width: 350px">
           <p class="cherts_header"> {{alertpie.title}}</p>
           <chart-pie2 
@@ -92,10 +103,7 @@
           <p class="cherts_header"> 设备报警折线图</p>
           <chart-line2 
             :style="{height: (mapHeight*0.44 - 45) + 'px'}" 
-            :cola="cola"
-            :colb="colb"
-            :colc="colc"
-            :dayString="dayString"
+            :comId="selectCompany"
             backgroundColor="rgba(9,18,32,0.7)"
           ></chart-line2>
         </div>
@@ -129,20 +137,17 @@
 <script>
 import InforCard from '_c/info-card'
 import { ChartPie2, ChartLine2 } from '_c/charts'
-import { mapActions, mapState } from 'vuex'
+import { mapActions, mapState, mapGetters} from 'vuex'
 import Icons from '_c/icons/'
+// var SquareOverlay = require('@/libs/marker.js');
 import SquareOverlay from '@/libs/marker.js'
-
-import Vue from 'vue/dist/vue.esm.js'
-
-import PL from '@/assets/images/PL2.png'
-import { getClientWidth } from '@/libs/tools.js'
+import { getClientWidth, getAlertType } from '@/libs/tools.js'
 import { Companyselect } from '_c/input/index'
-import { markerEvent } from '@/libs/func.js'
-import logomin from '@/assets/images/logomin.png'
+import logo from '@/assets/images/logomin.png'
 import config from '@/config'
 
 export default {
+  name: 'show',
   components: {
     Companyselect,
     InforCard,
@@ -152,9 +157,8 @@ export default {
   },
   data () {
     return { 
-      logomin: logomin,
-      // unalertDeviceFlag: false,
-      selectCompany: 1,
+      logo: '',
+      selectCompany: 0,
       windowWidth: getClientWidth(),
       notifyModal: false,
       notifyData: "",
@@ -182,7 +186,7 @@ export default {
           className: 't_hd'
         }
       ],
-      alarmType: '',
+      alarmType: 0,
       alarmData: [],
       detail: "",
       alertpie: {
@@ -195,24 +199,21 @@ export default {
         title: '异常统计',
         type: 'pie'
       },
-      cola: [],
-      colb: [],
-      colc:[],
-      dayString:[],
-      alertInfo:"",
+      alertInfo: "",
       chooseAlert: {},
       zoom: 16,
-      chooseAlertList:[],
       canGetUnalertDevice: false,
       deviceParams: {},
       unalertDeviceList: [],
       loading: true,
       markersProduct: [],
+      markersDeviceProduct: [],
       style1: require("@/assets/images/juhe1.png"),
       style2: require("@/assets/images/juhe2.png"),
       style3: require("@/assets/images/juhe3.png"),
       style4: require("@/assets/images/juhe4.png"),
-      style5: require("@/assets/images/juhe5.png")
+      style5: require("@/assets/images/juhe5.png"),
+      deviceIcon: require("@/assets/images/markerdevice.png"),
     }
   },
   beforeCreate () {
@@ -227,102 +228,73 @@ export default {
     if (this.companyList.length === 0) {
       this.getCompanyList()
     }
+    if(!this.socket.isConnected) {
+      this.$connect()
+    }
+    // this.sendMessage({'token': this.token,'page':'show'}) 
   },
   computed: {
     ...mapState({
       mapHeight: state => state.user.windowH - 60,
       comId : state => state.user.comId,
       companyList: state => state.user.companyList,
-      defaultCity: state => state.alert.defaultCity,
-      // token: state => state.user.token
-    })
+      system_name: state => state.user.system_name,
+      companyIcon: state => state.user.companyIcon,
+      baseUrl: state => state.user.baseUrl,
+      socket: state => state.websocket.socket,
+      token: state => state.user.token,
+    }),
+    ...mapGetters({
+      location: 'getDefalultLocation'
+    }),   
   },
   watch: {
-    chooseAlertList: {
-      handler(val) {
-        this.setMarker()
-      },
-    },
     unalertDeviceList(val) {
       this.setUnalertMarker()   
     },
-    // token (val) {
-    //   if (val === '') {
-    //     this.$router.push({
-    //       name: 'login'
-    //     })
-    //   }
-    // }
+    companyIcon: {
+      handler(val) {
+        if (val != '') {
+          this.logo = this.baseUrl + val.substring(2) 
+        } else {
+          this.logo = logo
+        }        
+      },
+      immediate: true
+    },
+    'socket.message': {
+      handler(val) {
+        console.log(val)
+        var alertText = getAlertType(val.alertType)
+        if (val.alertType) {
+          this.$Notice.warning({
+            title: '报警通知',
+            desc: `智能消火栓 ${val.deviceId} ${alertText}`,
+            duration: 4
+          })
+        }  
+        this.initPage()  
+      },
+      deep:true
+    },
+    'socket.isConnected': {
+      handler(val) {
+        if(val) {
+          this.sendMessage({'token': this.token,'page':'show'}) 
+        }
+      },
+      deep:true,
+      immediate: true
+    },
   },
   methods: {
-    ...mapActions(['getShowUnalertDevice','getDevicemonitoring', 'getAlertAnalyze', 'getShowAlertInfo','getCompanyList']),
+    ...mapActions(['getShowUnalertDevice','getDevicemonitoring', 'getShowAlertInfo','getCompanyList','getStatisticalChart','sendMessage']),
     //选中报警种类
     alertTypeChoose (type) {
-      var arrCopy = _.cloneDeep(this.detail.alertList)
-      var list = [];
-      switch (type) {
-        case 0:
-          list = arrCopy
-          break;
-        case 1:
-          list = _.filter(arrCopy, ['state', '10'])
-          break;
-        case 2:
-          list = _.filter(arrCopy, ['state', '20'])
-          break;
-        case 3:
-          list = _.filter(arrCopy, ['state', '30'])
-          break;
-        case 4:
-          list = _.filter(arrCopy, ['state', '70'])
-          break;
-        default:
-          list = arrCopy
-          break;
-      }  
-      // console.log(list)
-      this.chooseAlertList = list  //监听chooseAlertList 更新页面标记点
-      this.alarmData = list
-    },
-    //没有报警的普通标记点
-    setUnalertMarker () {
-      if (!this.map ) return
-      this.deletePoint()
-      var map = this.map
-      this.unalertDeviceList.forEach( (val,key) => {
-        var point = new BMap.Point(val.lng, val.lat)
-        var marker = new BMap.Marker(point)
-        map.addOverlay(marker)
-        marker.setLabel(val.address)
-        var opts = {
-          width : 200,     // 信息窗口宽度
-          height: 100,     // 信息窗口高度
-          title :  `设备号： ${val.device_id}`, // 信息窗口标题
-          enableMessage:true//设置允许信息窗发送短息
-        }
-        var infoWindow = new BMap.InfoWindow(`地址：${val.address}`, opts);  // 创建信息窗口对象 
-
-        marker.addEventListener("click", () => {
-          map.openInfoWindow(infoWindow,point); //开启信息窗口
-        })
-        
-      })
-      // this.deletePoint()
-    },
-    deletePoint (){
-      if (!this.map ) return
-      var map = this.map
-      var allOverlay = map.getOverlays();
-      console.log(allOverlay)
-      if (_.isArray(allOverlay)) {
-        for(var i = 0; i<allOverlay.length; i++) {
-          //删除指定经度的点       
-          if (allOverlay[i].getIcon ) {
-            // allOverlay[i].removeEventListener()
-            map.removeOverlay(allOverlay[i]);
-          }
-        }
-      }      
+      this.alarmData = []
+      this.alarmType = type
+      this.getDeviceAlert()
+      // this.classifyAlert()
     },
     //报警状态的标记点
     setMarker () {
@@ -334,15 +306,13 @@ export default {
       if (this.infoWindow) {
         this.infoWindow.close()
       }
-
-      if (this.chooseAlertList.length === 0 ) return  
+      if (this.alarmData.length === 0 ) return  
       var markers = new Array()
       var points = new Array();
-      this.chooseAlertList.forEach( (item,key) => {
+      this.alarmData.forEach( (item,key) => {
         var point = new BMap.Point( item.lng, item.lat)
         points.push(point)
-        let color = this.markerColor(item.state)
-        var myMarker = new SquareOverlay({lng:item.lng, lat:item.lat}, 30, color,map, item.device_id, this.addClickHandlerProduct)
+        var myMarker = new SquareOverlay({lng:item.lng, lat:item.lat}, 36, map, item.device_id, this.addClickHandlerProduct)
         var marker = new BMap.Marker(point)
         markers.push(myMarker)
       })
@@ -351,6 +321,7 @@ export default {
       this.markerClustererProduct() //聚合
     },
     markerClustererProduct () {
+      // var allMaerker = _.concat(this.markersProduct, this.markersDeviceProduct);
       var map = this.map
       var markerClusterer = new BMapLib.MarkerClusterer(map, {
         markers: this.markersProduct,
@@ -379,6 +350,7 @@ export default {
         ]
       });
       this.markerClusterer = markerClusterer
+      console.log(markerClusterer)
     },
     //标记点传入的点击显示窗口的方法
     addClickHandlerProduct (center,device) {
@@ -396,7 +368,7 @@ export default {
       var map = this.map
       map.centerAndZoom(centerPoint, this.zoom)
       var opts = {
-          width : 350,     // 信息窗口宽度
+          width : 380,     // 信息窗口宽度
           height: 450,     // 信息窗口高度
       };
       var sContent =`
@@ -411,34 +383,14 @@ export default {
       var infoWindow = new BMap.InfoWindow(sContent,opts);
       this.infoWindow = infoWindow
       map.openInfoWindow(infoWindow,point)
-      this.getShowAlertInfo({ "device_id": this.chooseAlert["device_id"]})
+      this.getShowAlertInfo({ "device_id": this.chooseAlert["device_id"],"alarmType": this.alarmType})
       .then( res => {
         setTimeout(() => {
           this.$windowinfo(res, false)
         })
       })
     },
-    markerColor(val){
-      let color =''
-      switch (val) {
-        case '10':
-          color = "#0DF50D"
-          break;
-        case '20':
-          color = "#2d8cf0"
-          break;
-        case '30':
-          color = "#FFD100"
-          break;
-        case '70':
-          color = "#FF4A3B"
-          break;
-        default:
-          // statements_def
-          break;
-      }
-      return color
-    },
+    //点击报警列表
     openAlarm (index) {
       var copy = _.cloneDeep(this.alarmData[index])
       this.chooseAlert = copy
@@ -450,54 +402,44 @@ export default {
       this.ifLoginOut = val
     },
     comChange (val) {
+      this.alarmData = []
       this.selectCompany = val
+      this.alarmType = 0
       this.initPage()
     },
+    getDeviceAlert () {
+      var comId = this.comId === 1 ? this.selectCompany : this.comId
+      this.getDevicemonitoring({'companyId': comId, 'alertType': this.alarmType}).then(res => {
+        console.log(res)
+        this.alarmData = res.alertList != null ? res.alertList : []
+        var count = {}
+        count.downc = res.downc
+        count.lossc = res.lossc
+        count.opc = res.opc
+        count.prec = res.prec
+        count.alertTotal = res.prec+res.opc+res.lossc+res.downc 
+        this.detail = count
+        this.setMarker()
+      })
+    },
     initPage () {
-      var comId = this.comId === 1 ? this.selectCompany : comId
-      this.getDevicemonitoring({'companyId': comId}).then(res => {
-        this.detail = res
-        if ( res.alertList !== null) {
-          this.alarmData = res.alertList
-          this.chooseAlertList = res.alertList      
-        } else {
-          this.chooseAlertList = []
-          this.alarmData = []
-          this.detail.alertList = []
-        }
-        // '水压异常', '阀门打开','倾倒', '失联'
+      var comId = this.comId === 1 ? this.selectCompany : this.comId
+      this.getDeviceAlert()
+      this.getStatisticalChart({'companyId': comId}).then( res => {
         this.alertpie.value = [
           {value: res.prec, name: '水压异常'},
-          {value: res.opc, name: '阀门打开'},
-          {value: res.downc, name: '倾倒'}
+          {value: res.opc, name: '阀门开启'},
+          {value: res.downc, name: '撞倒'}
         ]
 
         this.unusualpie.value = [
-          {value: res.lossc, name: '失联'},
+          {value: res.lossc, name: '离线'},
           {value: res.sigc, name: '低信号'},
           {value: res.powerc, name: '低电量'}
         ]
       })
-      this.getAlertAnalyze({'companyId': comId}).then( res => {
-        // console.log(res)
-        if (res.length > 0) {
-          var cola = [],
-              colb = [],
-              colc = [],
-              dayString = []
-          res.forEach( (val, key) => {
-            cola.push(val.cola)
-            colb.push(val.colb)
-            colc.push(val.colc)
-            dayString.push(val.dayString)
-          })
-          this.cola = cola
-          this.colb = colb
-          this.colc = colc
-          this.dayString = dayString
-        }
-      })
     },
+    //获取没有报警的标记点
     getUnalertDevice () {
       if (!this.canGetUnalertDevice || !this.map) return
       var map = this.map;
@@ -510,7 +452,54 @@ export default {
       this.getShowUnalertDevice(this.deviceParams).then( res => {
         this.unalertDeviceList = res === null ? [] : res
       })
-      // this.unalertDeviceFlag = false
+    },
+    //没有报警的普通标记点
+    setUnalertMarker () {
+      if (!this.map ) return
+      if (this.markerClusterer) {
+        this.markerClusterer.removeMarkers(this.markersDeviceProduct)
+      }
+      this.deletePoint()
+      var map = this.map
+      this.markersDeviceProduct = []
+      this.unalertDeviceList.forEach( (val,key) => {
+        var point = new BMap.Point(val.lng, val.lat)
+        var myIcon = new BMap.Icon(this.deviceIcon,new BMap.Size(32,32));
+        var marker = new BMap.Marker(point,{icon: myIcon})
+        this.markersDeviceProduct.push(marker)
+        map.addOverlay(marker)
+        marker.setLabel(val.address)
+        var opts = {
+          width : 200,     // 信息窗口宽度
+          height: 100,     // 信息窗口高度
+          title :  `设备号： ${val.device_id}`, // 信息窗口标题
+          enableMessage:true//设置允许信息窗发送短息
+        }
+        var infoWindow = new BMap.InfoWindow(`地址：${val.address}`, opts);  // 创建信息窗口对象 
+        marker.addEventListener("click", () => {
+          map.openInfoWindow(infoWindow,point); //开启信息窗口
+        })       
+      })
+      var curClusterer = this.markerClusterer.getMarkers()
+      console.log(curClusterer)
+      var removeClusterer = _.difference(curClusterer,this.markersProduct) 
+      this.markerClusterer.removeMarkers(removeClusterer )
+      this.markerClusterer.addMarkers(this.markersDeviceProduct)
+    },
+     //删除普通标记点
+    deletePoint (){
+      if (!this.map ) return
+      var map = this.map
+      var allOverlay = map.getOverlays();
+      console.log(allOverlay)
+      if (_.isArray(allOverlay)) {
+        for(var i = 0; i<allOverlay.length; i++) {
+          //删除指定经度的点       
+          if (allOverlay[i].getIcon ) {
+            map.removeOverlay(allOverlay[i]);
+          }
+        }
+      }      
     }
   },
   mounted() {
@@ -519,11 +508,11 @@ export default {
     var map = new BMap.Map("XSDFXPage");
     this.map = map
     // 初始化地图,设置中心点坐标和地图级别
-    map.centerAndZoom(new BMap.Point(config.defaultLocation.lng,config.defaultLocation.lat), this.zoom);
+    map.centerAndZoom(new BMap.Point(this.location.lng,this.location.lat), this.zoom);
     // 添加地图类型控件
     // map.addControl(new BMap.MapTypeControl());  
     // 设置地图显示的城市 此项是必须设置的
-    map.setCurrentCity(config.defaultCity);    
+    map.setCurrentCity(this.location.city);    
     // 开启鼠标滚轮缩放      
     map.enableScrollWheelZoom(true);
     map.setMapStyleV2({     
@@ -537,9 +526,7 @@ export default {
         this.canGetUnalertDevice = false
       }
     });
-
     map.addEventListener("dragend",this.getUnalertDevice)
-
     map.addEventListener("tilesloaded", () => {
       setTimeout( () => {
         this.loading = false
@@ -587,20 +574,6 @@ export default {
     top:  5px;
     right: 4px;
   }
-  @keyframes scaleDraw {  /*定义关键帧、scaleDrew是需要绑定到选择器的关键帧名称*/
-    0%{
-        transform: scale(0.9);  /*开始为原始大小*/
-    }
-    25%{
-        transform: scale(1.2); /*放大1.1倍*/
-    }
-    50%{
-        transform: scale(0.9);
-    }
-    75%{
-        transform: scale(1.2);
-    }
-  }
   .show .info_header{
     height: 70px;
   
@@ -625,10 +598,10 @@ export default {
     margin-left: 12px;
   }
   .show .tel{
-    margin-right: 53px;
+    margin-right: 56px;
   }
   .show .step_block .step_btn{
-    width: calc(100% - 50px);
+    width: calc(100% - 60px);
   }
   .show .ivu-card-bordered {
     min-height: 440px;
@@ -640,4 +613,5 @@ export default {
     z-index: 1001;
     background-color: rgba(9,18,32,0.9);
   }
+  
 </style>

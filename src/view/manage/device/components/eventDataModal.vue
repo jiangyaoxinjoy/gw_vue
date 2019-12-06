@@ -58,18 +58,26 @@
           <RadioGroup v-model="tab2Params.dataType" type="button" size="small" @on-change="tab2DataTypeChange">
             <Radio :label="1">全部</Radio>
             <Radio :label="2">水压异常</Radio>
-            <Radio :label="3">阀门打开</Radio>
+            <Radio :label="3">阀门开启</Radio>
             <Radio :label="4">撞倒</Radio>
-            <Radio :label="5">设备异常</Radio>
+            <Radio :label="5">离线</Radio>
+            <Radio :label="6">原始数据</Radio>
           </RadioGroup>
         </div>
         <Table
-          :columns="tab2Columns"
+          :loading="loading"
+          :columns="tab2Params.dataType ==  6 ? tabcolumnsOrigin : tab2Columns"
           :data="tab2Data"
-          :height="tableHeight - 260"
-        >
+          :height="tableHeight - 260">
           <Page class-name='totalfr' slot="footer"  :total="tab2total" @on-change="tab2PageChange" :page-size="tab2Params.limit" size="small" show-total />
         </Table>
+        <!--  <Table
+          v-if="tab2Params.dataType == 6"
+          :columns="tabcolumnsOrigin"
+          :data="tab2Data"
+          :height="tableHeight - 260">
+          <Page class-name='totalfr' slot="footer"  :total="tab2total" @on-change="tab2PageChange" :page-size="tab2Params.limit" size="small" show-total />
+        </Table> -->
       </Card>
     </Modal>
 </template>
@@ -84,14 +92,7 @@ export default {
   },
   data () {
     return {
-      // tabValue: 0,
       selectTime: new Date(new Date(new Date().toLocaleDateString()).getTime()),
-      // tab1Params: {
-      //   limit: 30,
-      //   pageNum: 1,
-      //   offset: 0,
-      //   showType: 1
-      // },
       tab1total: 0,
       tab1Data: [],
       tab2Params: {
@@ -101,65 +102,34 @@ export default {
         limit: 30,
         pageNum: 1,
         offset: 0
-        // showType: 1,
       },
       tab2total: 0,
       tab2Data: [],
-      tab1columns: [
+      tabcolumnsOrigin: [
         {
-          title: '事件ID',
+          title: 'ID',
           key: 'Id',
           minWidth: 100
         },
         {
-          title: '发生时间',
-          key: 'sendtime',
+          title: '内容',
+          key: 'content',
+          minWidth: 160,
+        },
+        {
+          title: '时间',
+          key: 'createtime',
           minWidth: 160,
           render: (h, params) => {
-            let time = getDate(params.row.sendtime)
-            return h('span', time)
+            let dateee = new Date(params.row.createtime).toJSON();
+            return h('span', new Date(+new Date(dateee) + 8 * 3600 * 1000).toISOString().replace(/T/g, ' ').replace(/\.[\d]{3}Z/, ''))
           }
         },
         {
-          title: '事件类型',
-          key: 'alert_type',
-          minWidth: 100,
-          render: (h, params) => {
-            let text = ''
-            switch (params.row.alert_type) {
-              case '20':
-                text = '阀门打开'
-                break
-              case '30':
-                text = '撞倒'
-                break
-              case '60':
-                text = '水压异常'
-                break
-              case '70':
-                text = '失联'
-                break
-              default:
-                break
-            }
-            return h('span', text)
-          }
+          title: '设备ID',
+          key: 'device_id',
+          minWidth: 160,
         },
-        {
-          title: '值',
-          key: 'cola',
-          minWidth: 60
-        },
-        {
-          title: '公司名称',
-          key: 'company',
-          minWidth: 120
-        },
-        {
-          title: '备注',
-          key: 'descrip',
-          minWidth: 50
-        }
       ],
       tab2Columns: [
         {
@@ -178,17 +148,29 @@ export default {
           render: (h, params) => {
             let text = ''
             switch (params.row.alert_type) {
-              case '20':
-                text = '阀门打开'
+              case '120':
+                text = '阀门开启'
                 break
-              case '30':
+              case '130':
                 text = '撞倒'
                 break
               case '60':
                 text = '水压异常'
                 break
               case '70':
-                text = '失联'
+                text = '离线'
+                break
+              case '80':
+                text = '水压恢复'
+                break
+              case '90':
+                text = '阀门已关闭'
+                break
+              case '100':
+                text = '撞倒恢复'
+                break
+              case '110':
+                text = '离线恢复'
                 break
               default:
                 break
@@ -201,13 +183,14 @@ export default {
           key: 'cola',
           minWidth: 60
         },
-        {
-          title: '状态',
-          render: (h, params) => {
-            return h('span', '已解析')
-          }
-        }
-      ]
+        // {
+        //   title: '状态',
+        //   render: (h, params) => {
+        //     return h('span', '已解析')
+        //   }
+        // }
+      ],
+      loading: true
     }
   },
   computed: {
@@ -241,25 +224,40 @@ export default {
     this.tab2Params.selectTime = date.getTime()
   },
   methods: {
-    ...mapActions(['getDeviceAlertOriginData', 'exportDeviceEvent']),
+    ...mapActions(['getDeviceAlertOriginData', 'exportDeviceEvent','getOridata']),
     modalStateChange (val) {
       this.$emit('modalState', val)
     },
     getDeviceOriginData () {
+      this.loading = true
+      this.tab2Data = []
       let payload = JSON.parse(JSON.stringify(this.tab2Params))
       payload.offset = (payload.pageNum - 1) * payload.limit
       payload.device_id = this.queryDeviceId
-
-      this.getDeviceAlertOriginData(payload).then(res => {
-        console.log(res)
-        if (res.list != null) {
-          this.tab2Data = res.list
-          this.tab2total = res.total
-        } else {
-          this.tab2Data = []
-          this.tab2total = 0
-        }
-      })
+      if(this.tab2Params.dataType != 6) {
+        this.getDeviceAlertOriginData(payload).then(res => {
+          console.log(res)
+          if (res.list != null) {
+            this.tab2Data = res.list
+            this.tab2total = res.total
+          } else {
+            this.tab2Data = []
+            this.tab2total = 0
+          }
+          this.loading = false
+        })
+      }else{
+        this.getOridata(payload).then( res =>{
+          if (res.list != null) {
+            this.tab2Data = res.list
+            this.tab2total = res.count
+          } else {
+            this.tab2Data = []
+            this.tab2total = 0
+          }
+          this.loading = false
+        })
+      } 
     },
   //   // tabClick (val) {
   //   //   if (val === 1 && this.tab2Data.length == 0) {
@@ -271,8 +269,9 @@ export default {
       this.getDeviceOriginData()
     },
     tab2DataTypeChange () {
-      // this.tab2Loading = true
       this.getDeviceOriginData()
+      // this.tab2Loading = true
+      
     },
     tab2PageChange (val) {
       // this.tab2Loading = true
