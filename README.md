@@ -39,6 +39,7 @@ See [Configuration Reference](https://cli.vuejs.org/config/).
 ![Image text](./mdpic/4.png)
 ![Image text](./mdpic/5.png)
 ![Image text](./mdpic/6.png)
+![Image text](./mdpic/10.png)
 ![Image text](./mdpic/7.png)
 ![Image text](./mdpic/8.png)
 ![Image text](./mdpic/9.png)
